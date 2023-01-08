@@ -1,0 +1,26 @@
+{
+  "name": "waifumon",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run build && npm run start",
+    "build": "npx rimraf dist && ttsc",
+    "start": "node dist/",
+    "prod": "npm run build && node dist/ prod",
+    "launch": "npm run build && cd dist/ && node launcher.js",
+    "deploy": "npm run build && pm2 start dist/ -o output.log -e error.log --time -n 'WaifuMon' -f -- prod",
+    "restart": "npm run build && pm2 restart 'WaifuMon'"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.7.1",
+    "dotenv": "^16.0.3",
+    "mongoose": "^6.8.3"
+  },
+  "description": "",
+  "devDependencies": {
+    "ts-transformer-keys": "^0.4.4",
+    "ttypescript": "^1.5.15"
+  }
+}

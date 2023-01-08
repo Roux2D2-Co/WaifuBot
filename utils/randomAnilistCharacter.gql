@@ -1,0 +1,27 @@
+query charactersRandom ($pageNumber: Int, $not_in: [Int]) {
+	Page(perPage: 1, page: $pageNumber) {
+		characters(sort: FAVOURITES_DESC, id_not_in: $not_in) {
+			id
+			age
+			siteUrl
+			image {
+				large
+			}
+			name {
+        alternative
+				alternativeSpoiler
+        userPreferred
+				full
+			}
+      gender
+			media(perPage: 1, sort: POPULARITY_DESC) {
+        nodes {
+					title {
+						romaji
+					}
+          isAdult
+				}
+			}
+		}
+	}
+}

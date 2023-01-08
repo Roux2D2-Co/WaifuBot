@@ -1,0 +1,6 @@
+node_modules/
+dist/
+guildBackups/
+/test*
+assets/images/**
+.env
