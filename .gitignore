@@ -3,4 +3,5 @@ dist/
 guildBackups/
 /test*
 assets/images/**
+!assets/images/.gitkeep
 .env
