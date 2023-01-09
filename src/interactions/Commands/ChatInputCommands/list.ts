@@ -30,17 +30,28 @@ export default {
                 str  += wai.name + "\n";
                 console.log(wai.name);
                 //await interaction.editReply(str.toString());
+            let buttonLeftminus10 = new ButtonBuilder()
+                .setCustomId("goToOnList_2")
+                .setLabel("-10")
+                .setStyle(ButtonStyle.Primary)
+                .setEmoji("⏪");
             let buttonLeft = new ButtonBuilder()
-                .setCustomId("goToleftOnList")
+                .setCustomId("goToOnList_0")
                 .setLabel("Gauche")
                 .setStyle(ButtonStyle.Primary)
                 .setEmoji("⬅️");
             let buttonRight = new ButtonBuilder()
-                .setCustomId("goToRightOnList")
+                .setCustomId("goToOnList_1")
                 .setLabel("Droite")
                 .setStyle(ButtonStyle.Primary)
                 .setEmoji("➡️");
-            let actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(buttonLeft, buttonRight);
+            let buttonRightplus10 = new ButtonBuilder()
+                .setCustomId("goToOnList_3")
+                .setLabel("+10")
+                .setStyle(ButtonStyle.Primary)
+                .setEmoji("⏩");
+            str+= "Index : " + 0 + "/" + (userDatabaseProfile!.waifus.length - 1) + "\n";
+            let actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(buttonLeftminus10, buttonLeft, buttonRight, buttonRightplus10);
             await interaction.editReply({ content: str.toString(), components: [actionRow] });
         }
     },
