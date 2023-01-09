@@ -69,4 +69,20 @@ export default {
 			.setColor(loli ? Colors.Red : Colors.Green);
 		return { embeds: [waifuEmbed] };
 	},
+
+	tradeWaifus: (users: { userId: string; waifu: AnilistWaifu }[], imagePath: string): { embeds: EmbedBuilder[]; files: AttachmentBuilder[] } => {
+		const attachment = new AttachmentBuilder(readFileSync(imagePath), { name: "trade.png" });
+
+		const waifuEmbed = new EmbedBuilder()
+			.setTitle("Waifu Trade")
+			.setDescription(`<@${users[0].userId}> wants to trade with <@${users[1].userId}>`)
+			.addFields(
+				{ name: "\u200b", value: users[0]!.waifu!.name!.full, inline: true },
+				{ name: "\u200b", value: "Versus", inline: true },
+				{ name: "\u200b", value: users[1]!.waifu!.name!.full, inline: true }
+			)
+			.setImage("attachment://trade.png")
+			.setColor(Colors.White);
+		return { embeds: [waifuEmbed], files: [attachment] };
+	},
 };
