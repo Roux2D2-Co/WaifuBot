@@ -1,5 +1,5 @@
 import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ApplicationCommandOptionType } from "discord.js";
-import Anilist from "../../../classes/Anilist";
+import { rmSync } from "fs";
 import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
 
@@ -24,11 +24,14 @@ export default {
 			);
 			const userInput = interaction.options.getString("name") as string;
 			if (waifuNames.includes(userInput.toLowerCase())) {
+				interaction.guild!.waifu == null;
 				await interaction.editReply("https://tenor.com/view/yes-gif-23999135");
 				const { embeds } = customEmbeds.claimedWaifu(waifu, interaction.user.id);
-				interaction.guild!.waifuMessage.edit({ embeds });
+				interaction.guild!.waifuMessage.edit({ embeds }).then(() => {
+					rmSync(`./assets/images/${waifu.id}.png`);
+				});
 			} else {
-				await interaction.editReply("https://tenor.com/bTLGr.gif");
+				await interaction.editReply("Nope");
 			}
 		}
 	},
