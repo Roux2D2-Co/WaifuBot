@@ -2,6 +2,7 @@ import axios from "axios";
 import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
 import { UserModel } from "../../../database/models/user";
 import { Waifu, WaifuSchema } from "../../../classes/Waifu";
+import customEmbeds from "../../../utils/customEmbeds";
 
 export default {
     dmPermission: false,
@@ -29,7 +30,6 @@ export default {
                 wai = userDatabaseProfile.waifus[0] as Waifu;
                 str  += wai.name + "\n";
                 console.log(wai.name);
-                //await interaction.editReply(str.toString());
             let buttonLeftminus10 = new ButtonBuilder()
                 .setCustomId("goToOnList_2")
                 .setLabel("-10")
@@ -50,9 +50,13 @@ export default {
                 .setLabel("+10")
                 .setStyle(ButtonStyle.Primary)
                 .setEmoji("⏩");
-            str+= "Index : " + 0 + "/" + (userDatabaseProfile!.waifus.length - 1) + "\n";
+            var maxIndex = userDatabaseProfile!.waifus.length - 1
+            str+= "Index : " + 0 + "/" + maxIndex + "\n";
+            var index = 0
+            const { embeds } = await customEmbeds.displayWaifuInlist(wai, index.toString(), maxIndex.toString(), interaction.user.username);
             let actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(buttonLeftminus10, buttonLeft, buttonRight, buttonRightplus10);
-            await interaction.editReply({ content: str.toString(), components: [actionRow] });
+            await interaction.editReply({ embeds: embeds, components: [actionRow] });
+            //await interaction.editReply({ content: str.toString(), components: [actionRow] });
         }
     },
     type: ApplicationCommandType.ChatInput,

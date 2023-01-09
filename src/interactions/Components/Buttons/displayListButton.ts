@@ -7,14 +7,15 @@ import {
 } from "discord.js";
 import { UserModel } from "../../../database/models/user";
 import { Waifu, WaifuSchema } from "../../../classes/Waifu";
+import customEmbeds from "../../../utils/customEmbeds";
 
 export default {
     customId: "goToOnList_",
     async execute(interaction: ButtonInteraction): Promise<void> {
-        let splitted = interaction.message.content.split(" ");
+        let splitted = interaction.message.embeds[0].footer!.text.split(" ");
         let actionToDo = parseInt(interaction.customId.split("_")[1]);
         let actualIndex = parseInt(splitted[splitted.length - 1].split("/")[0]);
-        let MaxIndex = parseInt(splitted[splitted.length - 1].split("/")[1]);
+        let maxIndex = parseInt(splitted[splitted.length - 1].split("/")[1]);
         const userId = interaction.message.interaction?.user.id;
         let userDatabaseProfile = await UserModel.findOne({ id: userId });
         let str: String;
@@ -22,7 +23,7 @@ export default {
         switch (actionToDo) {
             case 0: {
                 if (actualIndex <= 0) {
-                    actualIndex = MaxIndex;
+                    actualIndex = maxIndex;
                 }
                 else {
                     actualIndex--;
@@ -30,7 +31,7 @@ export default {
                 break;
             }
             case 1: {
-                if (actualIndex >= MaxIndex) {
+                if (actualIndex >= maxIndex) {
                     actualIndex = 0;
                 }
                 else {
@@ -41,10 +42,10 @@ export default {
             case 2: {
                 if (actualIndex - 10 < 0) {
                     var diff = 0 - actualIndex + 10;
-                    actualIndex = MaxIndex - diff;
+                    actualIndex = maxIndex - diff;
                     actualIndex++;
-                    if (actualIndex > MaxIndex) {
-                        actualIndex = MaxIndex;
+                    if (actualIndex > maxIndex) {
+                        actualIndex = maxIndex;
                     }
                 }
                 else {
@@ -53,8 +54,8 @@ export default {
                 break;
             }
             case 3: {
-                if (actualIndex + 10 > MaxIndex) {
-                    var diff = MaxIndex - actualIndex - 10;
+                if (actualIndex + 10 > maxIndex) {
+                    var diff = maxIndex - actualIndex - 10;
                     console.log(diff)
                     actualIndex = 0 - diff;
                     actualIndex--;
@@ -72,8 +73,9 @@ export default {
         let wai: Waifu;
         wai = userDatabaseProfile!.waifus[actualIndex] as Waifu;
         str += wai.name + "\n";
-        str += "Index : " + (actualIndex) + "/" + MaxIndex;
-        interaction.update({ content: str.toString() });
+        const { embeds } = await customEmbeds.displayWaifuInlist(wai, actualIndex.toString(), maxIndex.toString(), interaction.user.toString());
+        str += "Index : " + (actualIndex) + "/" + maxIndex;
+        interaction.update({ embeds: embeds});
     },
     style: ButtonStyle.Primary,
     type: ComponentType.Button,

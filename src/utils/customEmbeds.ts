@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
-import { EmbedBuilder, AttachmentBuilder, Colors } from "discord.js";
+import { EmbedBuilder, AttachmentBuilder, Colors} from "discord.js";
 import { AnilistWaifu } from "../classes/Anilist";
+import { Waifu } from "../classes/Waifu";
 
 function getObfuscatedWaifuName(words: string): string {
 	let letters: string[] = [];
@@ -59,14 +60,23 @@ export default {
 			<@${userId}> claimed **[${waifu.name.full}](https://anilist.co/character/${waifu.id})** !!
 				${waifu.name.full != waifu.name.userPreferred ? `Nom courant: ${waifu.name.userPreferred}` : ""}
 				${waifu.name.alternative.length > 0 ? `Alternatives :\n${waifu.name.alternative.map((t) => `\u200b\t- ${t}`).join("\n")}` : ""}
-				${
-					waifu.name.alternativeSpoiler.length > 0
-						? `Alternatives Spoiler :\n${waifu.name.alternativeSpoiler.map((t) => `\u200b\t- ||${t}||`).join("\n")}`
-						: ""
+				${waifu.name.alternativeSpoiler.length > 0
+					? `Alternatives Spoiler :\n${waifu.name.alternativeSpoiler.map((t) => `\u200b\t- ||${t}||`).join("\n")}`
+					: ""
 				}`
 			)
 			.setImage("attachment://nope.png")
 			.setColor(loli ? Colors.Red : Colors.Green);
+		return { embeds: [waifuEmbed] };
+	},
+
+	displayWaifuInlist: (waifu: Waifu, actualIndex: string, MaxIndex: string, username: string): { embeds: EmbedBuilder[] } => {
+		const footer = actualIndex+"/"+MaxIndex
+		const waifuEmbed = new EmbedBuilder()
+		.setTitle(username + "'s list")
+		.setImage(waifu.image)
+		.setFooter({ text: footer})
+		.setColor(Colors.Aqua);
 		return { embeds: [waifuEmbed] };
 	},
 };
