@@ -5,7 +5,7 @@ export const UserSchema = new mongoose.Schema({
 	id: { type: String, unique: true, require: true },
 	quote: { type: String, require: false },
 	waifus: {
-		type: Array<Waifu>,
+		type: Array<Waifu>(),
 		require: true,
 		default: [],
 	},
