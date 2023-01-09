@@ -2,12 +2,12 @@ import { Schema } from "mongoose";
 import { ObtentionWay } from "./ObtentionWay";
 import { keys } from "ts-transformer-keys";
 
-export interface Waifu {
-	date: Date;
-	name: string;
-	image: string;
-	type: ObtentionWay;
-	id: number;
+export class Waifu {
+	date!: Date;
+	name!: string;
+	image!: string;
+	type!: ObtentionWay;
+	id!: number;
 }
 
 export const WaifuSchema = new Schema({
