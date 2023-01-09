@@ -1,9 +1,10 @@
 import axios from "axios";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import { randomInt } from "../utils/utils";
 import { AnilistWaifu } from "./AnilistWaifu";
 
-const query = readFileSync("./utils/randomAnilistCharacter.gql", "utf-8");
+const randomWaifuQuery = readFileSync("./utils/randomAnilistCharacter.gql", "utf-8");
+const getWaifuByIdQuery = readFileSync("./utils/getAnilistCharacterById.gql", "utf-8");
 const responseTransformer = (response: any): AnilistWaifu => {
 	return JSON.parse(response).data.Page.characters[0];
 };
@@ -13,8 +14,8 @@ export default class Anilist {
 	static async getRandomCharacter(): Promise<AnilistWaifu> {
 		let { data: waifu } = await axios.post(
 			this.__API_URL,
-			// { query, variables: { pageNumber: randomInt(129169), not_in: [1] } },
-			{ query, variables: { pageNumber: 1, not_in: [1] } },
+			// { query: randomWaifuQuery, variables: { pageNumber: randomInt(129169), not_in: [1] } },
+			{ query: randomWaifuQuery, variables: { pageNumber: 1, not_in: [1] } },
 			{ transformResponse: responseTransformer }
 		);
 
@@ -22,6 +23,26 @@ export default class Anilist {
 		const { data: image } = await axios.get(waifu.image.large, { responseType: "arraybuffer" });
 		//save waifu image
 		await writeFileSync(`./assets/images/${waifu.id}.png`, image);
+		return waifu;
+	}
+
+	static async getWaifuById(id: number | string): Promise<AnilistWaifu> {
+		isNaN(id as number) && (id = parseInt(id as string));
+		let { data: waifu } = await axios.post(
+			this.__API_URL,
+			{ query: getWaifuByIdQuery, variables: { id } },
+			{
+				transformResponse: (r) => {
+					return JSON.parse(r).data.Character;
+				},
+			}
+		);
+		//download waifu image
+		if (!existsSync(`./assets/images/${waifu.id}.png`)) {
+			const { data: image } = await axios.get(waifu.image.large, { responseType: "arraybuffer" });
+			//save waifu image
+			await writeFileSync(`./assets/images/${waifu.id}.png`, image);
+		}
 		return waifu;
 	}
 }

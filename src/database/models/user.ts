@@ -1,6 +1,14 @@
 import mongoose from "mongoose";
 import { Waifu, WaifuSchema } from "../../classes/Waifu";
 
+export interface User {
+	id : string;
+	quote : string;
+	waifus : Waifu[];
+	favorite : Waifu;
+	deleteDate : Date;
+}
+
 export const UserSchema = new mongoose.Schema({
 	id: { type: String, unique: true, require: true },
 	quote: { type: String, require: false },
