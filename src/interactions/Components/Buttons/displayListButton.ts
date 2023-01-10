@@ -8,6 +8,7 @@ import {
 import { UserModel } from "../../../database/models/user";
 import { Waifu, WaifuSchema } from "../../../classes/Waifu";
 import customEmbeds from "../../../utils/customEmbeds";
+import { returnDominantColor } from "../../../utils/utils";
 
 export default {
     customId: "goToOnList_",
@@ -73,7 +74,8 @@ export default {
         let wai: Waifu;
         wai = userDatabaseProfile!.waifus[actualIndex] as Waifu;
         str += wai.name + "\n";
-        const { embeds } = await customEmbeds.displayWaifuInlist(wai, actualIndex.toString(), maxIndex.toString(), interaction.user.toString());
+        let color = await returnDominantColor(wai.image);
+        const { embeds } = await customEmbeds.displayWaifuInlist(wai, actualIndex.toString(), maxIndex.toString(), interaction.message.interaction!.user.username, color);
         str += "Index : " + (actualIndex) + "/" + maxIndex;
         interaction.update({ embeds: embeds});
     },
@@ -84,9 +86,3 @@ export default {
     label: "Passer d'un index à l'autre",
     regexValidator: /goToOnList_\d/,
 } as InteractionButtonComponentData;
-
-enum promo {
-    "Info1" = "751048352287686709",
-    "Info2" = "753696911973941390",
-    "LP" = "888757112560304148",
-}

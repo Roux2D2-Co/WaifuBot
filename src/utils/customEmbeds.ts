@@ -1,7 +1,8 @@
 import { readFileSync } from "fs";
-import { EmbedBuilder, AttachmentBuilder, Colors} from "discord.js";
+import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable} from "discord.js";
 import { AnilistWaifu } from "../classes/Anilist";
 import { Waifu } from "../classes/Waifu";
+import { rgbToHex } from "./utils";
 
 function getObfuscatedWaifuName(words: string): string {
 	let letters: string[] = [];
@@ -70,13 +71,17 @@ export default {
 		return { embeds: [waifuEmbed] };
 	},
 
-	displayWaifuInlist: (waifu: Waifu, actualIndex: string, MaxIndex: string, username: string): { embeds: EmbedBuilder[] } => {
+	displayWaifuInlist: (waifu: Waifu, actualIndex: string, MaxIndex: string, username: string, color: Array<number>): { embeds: EmbedBuilder[] } => {
+		console.log(color)
+		const hexColor : ColorResolvable = rgbToHex(color[0], color[1], color[2]) as ColorResolvable
+		console.log(hexColor)
 		const footer = actualIndex+"/"+MaxIndex
 		const waifuEmbed = new EmbedBuilder()
 		.setTitle(username + "'s list")
+		.setColor(hexColor)
+		.setDescription(waifu.name)
 		.setImage(waifu.image)
 		.setFooter({ text: footer})
-		.setColor(Colors.Aqua);
 		return { embeds: [waifuEmbed] };
 	},
 };

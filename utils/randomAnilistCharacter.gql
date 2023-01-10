@@ -18,6 +18,7 @@ query charactersRandom ($pageNumber: Int, $not_in: [Int]) {
         nodes {
 					title {
 						romaji
+						english
 					}
           isAdult
 				}

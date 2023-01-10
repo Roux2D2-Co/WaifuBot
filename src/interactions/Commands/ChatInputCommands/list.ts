@@ -3,6 +3,7 @@ import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputComma
 import { UserModel } from "../../../database/models/user";
 import { Waifu, WaifuSchema } from "../../../classes/Waifu";
 import customEmbeds from "../../../utils/customEmbeds";
+import { returnDominantColor } from "../../../utils/utils";
 
 export default {
     dmPermission: false,
@@ -11,7 +12,7 @@ export default {
     guilds: ["780715935593005088"],
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ ephemeral: false });
         const userId = interaction.user.id;
         let userDatabaseProfile = await UserModel.findOne({ id: userId });
         if (!userDatabaseProfile) {
@@ -53,7 +54,8 @@ export default {
             var maxIndex = userDatabaseProfile!.waifus.length - 1
             str+= "Index : " + 0 + "/" + maxIndex + "\n";
             var index = 0
-            const { embeds } = await customEmbeds.displayWaifuInlist(wai, index.toString(), maxIndex.toString(), interaction.user.username);
+            let color = await returnDominantColor(wai.image);
+            const { embeds } = await customEmbeds.displayWaifuInlist(wai, index.toString(), maxIndex.toString(), interaction.user.username, color);
             let actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(buttonLeftminus10, buttonLeft, buttonRight, buttonRightplus10);
             await interaction.editReply({ embeds: embeds, components: [actionRow] });
             //await interaction.editReply({ content: str.toString(), components: [actionRow] });

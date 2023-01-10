@@ -29,6 +29,14 @@ export const WaifuSchema = new Schema({
 		enum: ObtentionWay,
 		default: ObtentionWay.other,
 	},
+	media: {
+		nodes: {
+			title: {
+				romaji: String,
+				english: String,
+			}
+		}
+	},
 	id: {
 		type: Number,
 		required: true,

@@ -1,3 +1,4 @@
+const colorThief = require("colorthief");
 export function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -20,4 +21,19 @@ export function randomString(len = 25): string {
 export function randomInt(max: number) {
 	max = Math.floor(max);
 	return Math.floor(Math.random() * max); // The maximum is exclusive and the minimum is inclusive
+}
+
+export async function returnDominantColor(image: string) {
+	let color: Array<number>;
+	color = await colorThief.getColor(image);
+	return color;
+}
+
+export function componentToHex(c: number) {
+	var hex = c.toString(16);
+	return hex.length == 1 ? "0" + hex : hex;
+}
+
+export function rgbToHex(r: number, g: number, b: number) {
+	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
