@@ -1,8 +1,10 @@
 import { readFileSync } from "fs";
-import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable} from "discord.js";
+import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser } from "discord.js";
 import { AnilistWaifu } from "../classes/Anilist";
 import { Waifu } from "../classes/Waifu";
 import { rgbToHex } from "./utils";
+import { User as DatabaseUser } from "../database/models/user";
+
 
 function getObfuscatedWaifuName(words: string): string {
 	let letters: string[] = [];
@@ -83,5 +85,26 @@ export default {
 		.setImage(waifu.image)
 		.setFooter({ text: footer})
 		return { embeds: [waifuEmbed] };
+	},
+
+	profile: (userProfile: DatabaseUser, discordUser: DiscordUser): { embeds: EmbedBuilder[] } => {
+		const profileEmbed = new EmbedBuilder()
+			.setTitle(`${discordUser.username}`)
+			.setDescription(
+				`
+				${userProfile.quote}
+				${discordUser.username} ${
+					!!userProfile.nextRoll
+						? userProfile?.nextRoll < new Date()
+							? `is able to roll`
+							: `will be able to roll <t:${Math.round(userProfile.nextRoll?.getTime() / 1000)}:R>`
+						: ""
+				}
+				They have ${userProfile.waifus.length} characters.
+				${userProfile?.favorite ? `Their favorite character is ${userProfile.favorite.name}` : ""}
+				`
+			)
+			.setThumbnail(userProfile?.favorite?.image ?? null);
+		return { embeds: [profileEmbed] };
 	},
 };
