@@ -1,5 +1,5 @@
 import { createReadStream, createWriteStream, rmSync } from "fs";
-import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ApplicationCommandOptionType } from "discord.js";
+import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ApplicationCommandOptionType, ActionRowBuilder, ButtonBuilder, ButtonStyle, Colors } from "discord.js";
 import { UserModel, User } from "../../../database/models/user";
 import Anilist from "../../../classes/Anilist";
 
@@ -38,14 +38,16 @@ export default {
 
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
 		await interaction.deferReply({ ephemeral: false });
-		const userOneId = interaction.user.id;
+		const userOne = interaction.user;
+		const userOneId = userOne.id;
 		const userOneDatabaseProfile = users[userOneId] ?? (await UserModel.findOne({ id: userOneId }));
 		if (!userOneDatabaseProfile) {
 			await interaction.editReply("Vous n'avez pas de profil enregistré.");
 			return;
 		}
 
-		const userTwoId = interaction.options.getUser("user")!.id;
+		const userTwo = interaction.options.getUser("user")!;
+		const userTwoId = userTwo.id;
 		const userTwoDatabaseProfile = users[userTwoId] ?? (await UserModel.findOne({ id: userTwoId }));
 		if (!userTwoDatabaseProfile) {
 			await interaction.editReply("L'utilisateur avec qui vous souhaitez échanger n'a pas de profil enregistré.");
@@ -103,8 +105,47 @@ export default {
 			imageName
 		);
 
-		await interaction.editReply({ embeds, files }).then(() => {
-			rmSync(imageName);
+		const accept = new ButtonBuilder()
+			.setCustomId('accept')
+			.setLabel('Accept')
+			.setStyle(ButtonStyle.Success).setEmoji("👍");
+
+		const decline = new ButtonBuilder()
+			.setCustomId('decline')
+			.setLabel('Decline')
+			.setStyle(ButtonStyle.Danger).setEmoji("👎");
+
+		const row = new ActionRowBuilder<ButtonBuilder>()
+			.addComponents(
+				accept, decline
+			);
+
+
+
+		await interaction.editReply({ embeds, files, components: [row] }).then((message) => {
+			message.awaitMessageComponent({ filter: (i) => i.user.id === userTwoId, time: 60000 }).then(async (i) => {
+				if (i.customId === 'accept') {
+					console.log("Echange accepté");
+					// Récupération de l'embed de succès pour remplacer l'embed d'origine
+					const { embeds } = customEmbeds.tradeSuccess(
+						[
+							{ userId: userOneId, waifu: userOneWaifu },
+							{ userId: userTwoId, waifu: userTwoWaifu },
+						],
+						imageName
+					);
+					i.update({ embeds, components: [] });
+				} else if (i.customId === 'decline') {
+					console.log("Echange refusé");
+				} else {
+					console.log("Echange annulé");
+				}
+			}).catch(async (error) => {
+				await interaction.editReply("Le temps imparti pour accepter l'échange est écoulé.");
+				console.log(error);
+			}).then(async () => {
+				rmSync(imageName);
+			});
 		});
 	},
 	type: ApplicationCommandType.ChatInput,

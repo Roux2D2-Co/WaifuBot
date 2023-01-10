@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { EmbedBuilder, AttachmentBuilder, Colors } from "discord.js";
+import { EmbedBuilder, AttachmentBuilder, Colors, ActionRowBuilder, ButtonBuilder } from "discord.js";
 import { AnilistWaifu } from "../classes/Anilist";
 
 function getObfuscatedWaifuName(words: string): string {
@@ -83,6 +83,22 @@ export default {
 			)
 			.setImage("attachment://trade.png")
 			.setColor(Colors.White);
+		return { embeds: [waifuEmbed], files: [attachment] };
+	},
+
+	tradeSuccess: (users: { userId: string; waifu: AnilistWaifu }[], imagePath: string): { embeds: EmbedBuilder[]; files: AttachmentBuilder[] } => {
+		const attachment = new AttachmentBuilder(readFileSync(imagePath), { name: "trade.png" });
+
+		const waifuEmbed = new EmbedBuilder()
+			.setTitle("Trade Success !")
+			.setDescription(`<@${users[0].userId}> successfully trade with <@${users[1].userId}> at time ${new Date().toLocaleString()}`)
+			.addFields(
+				{ name: "\u200b", value: users[0]!.waifu!.name!.full, inline: true },
+				{ name: "\u200b", value: "Versus", inline: true },
+				{ name: "\u200b", value: users[1]!.waifu!.name!.full, inline: true }
+			)
+			.setImage("attachment://trade.png")
+			.setColor(Colors.Green);
 		return { embeds: [waifuEmbed], files: [attachment] };
 	},
 };

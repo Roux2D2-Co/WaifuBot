@@ -23,10 +23,10 @@ export class InteractionHandler {
 				let localInteraction = client.localCommands.get(interaction.commandType)?.get(interaction.commandName) ?? null;
 				localInteraction?.execute(interaction as Interaction);
 			} else if (interaction.isButton() || interaction.isSelectMenu()) {
-				let localInteraction = client?.localComponents.get(interaction.customId) ?? null;
+				let localInteraction = client?.localComponents?.get(interaction.customId) ?? null;
 				let regexResult: RegExpExecArray | undefined;
 				if (!localInteraction) {
-					for (const component of client.localComponents.values()) {
+					for (const component of client.localComponents?.values() ?? []) {
 						if (component.regexValidator) {
 							regexResult = component.regexValidator.exec(interaction.customId) ?? undefined;
 							if (!!regexResult) {
