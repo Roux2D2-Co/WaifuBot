@@ -1,5 +1,7 @@
 import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ApplicationCommandOptionType } from "discord.js";
 import { rmSync } from "fs";
+import { ObtentionWay } from "../../../classes/ObtentionWay";
+import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
 
@@ -24,11 +26,12 @@ export default {
 			);
 			const userInput = interaction.options.getString("name") as string;
 			if (waifuNames.includes(userInput.toLowerCase())) {
-				if (userDatabaseProfile.waifus.includes(waifu)) {
+				if (userDatabaseProfile.waifus.map((w) => w.name).includes(waifu.name.full)) {
 					await interaction.editReply("You already own this waifu");
 					return;
 				}
-				userDatabaseProfile.waifus.push(waifu);
+				userDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(waifu, ObtentionWay.claim));
+
 				userDatabaseProfile.save();
 				interaction.guild!.waifu == null;
 				await interaction.editReply("https://tenor.com/view/yes-gif-23999135");

@@ -1,6 +1,5 @@
 import { Schema } from "mongoose";
 import { ObtentionWay } from "./ObtentionWay";
-import { keys } from "ts-transformer-keys";
 
 export interface Waifu {
 	date: Date;
