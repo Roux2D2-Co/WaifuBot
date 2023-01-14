@@ -38,6 +38,39 @@ export default {
 				}
 			},
 		},
+		{
+			type: ApplicationCommandOptionType.SubcommandGroup,
+			name: "edit",
+			description: "Editer votre profil",
+			options: [
+				{
+					type: ApplicationCommandOptionType.Subcommand,
+					description: "Mettre à jour votre citation de profil",
+					name: "quote",
+					options: [
+						{
+							type: ApplicationCommandOptionType.String,
+							description: "Votre nouvelle citation",
+							name: "quote",
+							required: true,
+						},
+					],
+					execute: async (interaction: ChatInputCommandInteraction) => {
+						let user = interaction.user;
+						let userProfile = await UserModel.findOne({ id: user.id });
+						if (!userProfile) {
+							await interaction.editReply("Vous n'avez pas de profil.");
+							return;
+						} else {
+							let quote = interaction.options.getString("quote", true);
+							userProfile.quote = quote;
+							await userProfile.save();
+							await interaction.editReply("Votre citation a bien été mise à jour.");
+						}
+					},
+				},
+			],
+		},
 	],
 
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
