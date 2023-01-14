@@ -24,6 +24,12 @@ export default {
 			);
 			const userInput = interaction.options.getString("name") as string;
 			if (waifuNames.includes(userInput.toLowerCase())) {
+				if (userDatabaseProfile.waifus.includes(waifu)) {
+					await interaction.editReply("You already own this waifu");
+					return;
+				}
+				userDatabaseProfile.waifus.push(waifu);
+				userDatabaseProfile.save();
 				interaction.guild!.waifu == null;
 				await interaction.editReply("https://tenor.com/view/yes-gif-23999135");
 				const { embeds } = customEmbeds.claimedWaifu(waifu, interaction.user.id);
@@ -31,7 +37,7 @@ export default {
 					rmSync(`./assets/images/${waifu.id}.png`);
 				});
 			} else {
-				await interaction.editReply("Nope");
+				await interaction.editReply("Wrong name !");
 			}
 		}
 	},
