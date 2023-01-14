@@ -22,7 +22,6 @@ export default {
 				await interaction.editReply("Une erreur est survenue lors de la récupération de votre profil.");
 				return;
 			} else {
-				console.log(userProfile);
 				userDatabaseProfile = new UserModel(userProfile);
 				await userDatabaseProfile.save();
 				await interaction.editReply("Votre profil a bien été importé.");

@@ -38,4 +38,4 @@ UserSchema.pre("validate", { document: true }, function (next) {
 	next();
 });
 
-export const UserModel = mongoose.model("user", UserSchema);
+export const UserModel = mongoose.model<User>("user", UserSchema);
