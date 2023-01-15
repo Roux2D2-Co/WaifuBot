@@ -4,9 +4,11 @@ import {
 	ChatInputCommandInteraction,
 	ApplicationCommandSubCommandData,
 	ApplicationCommandOptionType,
+	ApplicationCommandSubGroupData,
 } from "discord.js";
 import customEmbeds from "../../../utils/customEmbeds";
 import { UserModel, User } from "../../../database/models/user";
+import { autocompleteCharacter } from "../../../utils/utils";
 
 export default {
 	dmPermission: false,
@@ -69,15 +71,52 @@ export default {
 						}
 					},
 				},
+				{
+					type: ApplicationCommandOptionType.Subcommand,
+					description: "Mettre à jour votre personnage favori",
+					name: "favorite",
+					options: [
+						{
+							type: ApplicationCommandOptionType.String,
+							description: "Votre nouvelle personnage favori",
+							name: "character",
+							autocomplete: true,
+							required: true,
+						},
+					],
+					execute: async (interaction: ChatInputCommandInteraction) => {
+						let user = interaction.user;
+						let userProfile = await UserModel.findOne({ id: user.id });
+						if (!userProfile) {
+							await interaction.editReply("Vous n'avez pas de profil.");
+							return;
+						} else {
+							let waifuId = interaction.options.getString("character", true);
+							let newFavoriteWaifu = userProfile.waifus.find((waifu) => waifu.id.toString() === waifuId);
+							userProfile.favorite = newFavoriteWaifu;
+							userProfile.save();
+							await interaction.editReply("Votre personnage favori a bien été mise à jour.");
+						}
+					},
+				},
 			],
 		},
 	],
 
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
 		await interaction.deferReply({ ephemeral: false });
+		let subcommandGroup = interaction.options.getSubcommandGroup(false);
 		let subCommand = interaction.options.getSubcommand(true);
-		let choosenSubcommand = this.options!.find((option) => option.name === subCommand) as ApplicationCommandSubCommandData;
+		let choosenSubcommand: ApplicationCommandSubCommandData | undefined;
+		if (!!subcommandGroup) {
+			let choosenSubcommandGroup = this.options!.find((option) => option.name === subcommandGroup) as ApplicationCommandSubGroupData;
+			choosenSubcommand = choosenSubcommandGroup.options?.find((option) => option.name === subCommand) as ApplicationCommandSubCommandData;
+		} else {
+			choosenSubcommand = this.options!.find((option) => option.name === subCommand) as ApplicationCommandSubCommandData;
+		}
 		!!choosenSubcommand && !!choosenSubcommand.execute && choosenSubcommand.execute(interaction);
 	},
+
+	onAutocomplete : autocompleteCharacter,
 	type: ApplicationCommandType.ChatInput,
 } as ChatInputApplicationCommandData;
