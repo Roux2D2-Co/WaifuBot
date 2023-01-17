@@ -1,4 +1,6 @@
 const colorThief = require("colorthief");
+import { User } from "../database/models/user";
+
 export function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -36,4 +38,10 @@ export function componentToHex(c: number) {
 
 export function rgbToHex(r: number, g: number, b: number) {
 	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+
+
+export function getAllMediasForAllWaifus(userProfile: User) {
+	//TODO
 }
