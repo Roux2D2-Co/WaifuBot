@@ -1,0 +1,43 @@
+{
+  "obtentionWay": {
+    "ROLL": "ROLL",
+    "claim": "CLAIM",
+    "gift": "DON",
+    "trade": "ÉCHANGE",
+    "other": "AUTRE"
+  },
+  "profile": {
+    "noProfile": {
+      "self": "Vous n'avez pas encore de profil !",
+      "other": "Ce membre n'a pas encore de profil !"
+    },
+    "rollNotAvailable":"Vous ne pouvez pas roll pour le moment !",
+    "rollAvailability" : "Disponibilité de la commande",
+    "characterCount" : "Nombre de personnages",
+    "favoriteCharacter" : "Personnage préféré : "
+  },
+  "waifu": {
+    "claim": {
+      "wrongName": "Le nom est invalide !",
+      "alreadyOwned": "Vous possédez déjà cette waifu !"
+    },
+    "roll": {
+      "nextRoll": "Prochain roll disponible"
+    },
+    "import": {
+      "alreadyImported": "Vous avez déjà importé votre profil !",
+      "importError": "Une erreur est survenue lors de la récupération de votre profil.",
+      "importSuccess": "Votre profil a bien été importé."
+    }
+  },
+  "embeds": {
+    "waifuDrop": "Un waifu apparait !",
+    "fullName": "Nom complet",
+    "mostUsedName": "Nom courant",
+    "alternative": "Alternatives",
+    "alternativeSpoiler": "Alternatives (spoiler)",
+    "rollMessage": "BRavo ! Vous venez de capturer",
+    "claimSuccessTitle": "Waifu capturé !",
+    "claimSuccessMessage": "vient de capturer"
+  }
+}
