@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser } from "discord.js";
+import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser, Embed } from "discord.js";
 import { AnilistWaifu } from "../classes/Anilist";
 import { Waifu } from "../classes/Waifu";
 import { rgbToHex } from "./utils";
@@ -74,16 +74,24 @@ export default {
 	},
 
 	displayWaifuInlist: (waifu: Waifu, actualIndex: string, MaxIndex: string, username: string, color: Array<number>): { embeds: EmbedBuilder[] } => {
-		console.log(color)
-		const hexColor : ColorResolvable = rgbToHex(color[0], color[1], color[2]) as ColorResolvable
-		console.log(hexColor)
-		const footer = actualIndex+"/"+MaxIndex
+		const hexColor: ColorResolvable = rgbToHex(color[0], color[1], color[2]) as ColorResolvable
+		const footer = (parseInt(actualIndex) + 1).toString() + "/" + (parseInt(MaxIndex) + 1).toString()
 		const waifuEmbed = new EmbedBuilder()
-		.setTitle(username + "'s list")
-		.setColor(hexColor)
-		.setDescription(waifu.name)
-		.setImage(waifu.image)
-		.setFooter({ text: footer})
+			.setTitle(username + "'s list")
+			.setColor(hexColor)
+			.setDescription(waifu.name + " (" + waifu.id + ") " + "\n\n" + (waifu.media?.title.english == undefined ? (waifu.media?.title.romaji == undefined ? "" : "*" + waifu.media?.title.romaji + "*") : "*" + waifu.media?.title.english + "*"))
+			.setImage(waifu.image)
+			.setFooter({ text: footer })
+		return { embeds: [waifuEmbed] };
+	},
+
+	updateWaifuInlist: (waifu: Waifu, actualIndex: string, color: Array<number>, embed: Embed): { embeds: EmbedBuilder[] } => {
+		const hexColor: ColorResolvable = rgbToHex(color[0], color[1], color[2]) as ColorResolvable
+		const waifuEmbed = EmbedBuilder.from(embed)
+			.setColor(hexColor)
+			.setDescription(waifu.name + " (" + waifu.id + ") " + "\n\n" + (waifu.media?.title.english == undefined ? (waifu.media?.title.romaji == undefined ? "" : "*" + waifu.media?.title.romaji + "*") : "*" + waifu.media?.title.english + "*"))
+			.setImage(waifu.image)
+			.setFooter({ text: embed.footer!.text.replace(/\d+\//, (parseInt(actualIndex) + 1).toString() + "/") })
 		return { embeds: [waifuEmbed] };
 	},
 
@@ -93,12 +101,11 @@ export default {
 			.setDescription(
 				`
 				${userProfile.quote}
-				${discordUser.username} ${
-					!!userProfile.nextRoll
-						? userProfile?.nextRoll < new Date()
-							? `is able to roll`
-							: `will be able to roll <t:${Math.round(userProfile.nextRoll?.getTime() / 1000)}:R>`
-						: ""
+				${discordUser.username} ${!!userProfile.nextRoll
+					? userProfile?.nextRoll < new Date()
+						? `is able to roll`
+						: `will be able to roll <t:${Math.round(userProfile.nextRoll?.getTime() / 1000)}:R>`
+					: ""
 				}
 				They have ${userProfile.waifus.length} characters.
 				${userProfile?.favorite ? `Their favorite character is ${userProfile.favorite.name}` : ""}

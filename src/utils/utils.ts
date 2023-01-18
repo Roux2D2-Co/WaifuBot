@@ -1,4 +1,6 @@
 const colorThief = require("colorthief");
+import axios from "axios";
+import { writeFileSync, rmSync } from "fs";
 import { User } from "../database/models/user";
 
 export function sleep(ms: number) {
@@ -27,7 +29,12 @@ export function randomInt(max: number) {
 
 export async function returnDominantColor(image: string) {
 	let color: Array<number>;
+	//check if image is something else than a png
+	if (image.includes(".png")) {
 	color = await colorThief.getColor(image);
+	} else {
+		color = [255, 255, 255]
+	}
 	return color;
 }
 
@@ -42,6 +49,53 @@ export function rgbToHex(r: number, g: number, b: number) {
 
 
 
-export function getAllMediasForAllWaifus(userProfile: User) {
-	//TODO
+export async function getAllMediasForAllWaifus(userProfile: User): Promise<boolean> {
+	let nbPages = Math.ceil(userProfile.waifus.length / 50);
+	let request = `query allMedias($in : [Int]) {`;
+	for (let i = 1; i < nbPages + 1; i++) {
+		request += `a_${i}: Page(perPage: 50, page: ${i}) {
+			characters(sort: ID, id_in: $in) {
+				id
+				media(perPage: 50, sort: ID) {
+					nodes {
+						id
+						source
+						title {
+							romaji
+							english
+						}
+					}
+				}
+			}
+		}`
+	}
+	request += `}`;
+	return axios.post("https://graphql.anilist.co", {
+		query: request,
+		variables: {
+			in: userProfile.waifus.map(w => w.id)
+		}
+	}).then(res => {
+		let i = 1;
+		userProfile.waifus.forEach(w => {
+			let media = res.data.data[`a_${Math.ceil(i / 50)}`].characters.find((c:any) => c.id == w.id).media.nodes.filter((m:any) => m.source == "ORIGINAL")[0];
+			if (media == undefined) {
+				media = res.data.data[`a_${Math.ceil(i / 50)}`].characters.find((c:any) => c.id == w.id).media.nodes[0];
+			}
+			i++;
+			if (media != undefined) {
+				w.media = {
+					id: media.id,
+					title: {
+						romaji: media.title.romaji,
+						english: media.title.english
+					}
+				};
+			}
+		})
+		return true;
+	}).catch(err => {
+		console.error(err);
+		return false;
+	})
 }
