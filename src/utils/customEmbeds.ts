@@ -53,6 +53,14 @@ export default {
 		return { embeds: [waifuEmbed], files: [attachment] };
 	},
 
+	rolledWaifu: (waifu: AnilistWaifu): { embeds: EmbedBuilder[] } => {
+		const waifuEmbed = new EmbedBuilder()
+			.setTitle(waifu.name.full)
+			.setDescription(`Congratulations!\nYou just claimed ${waifu.name.full} (${waifu.id})!`)
+			.setThumbnail(waifu.image.large);
+		return { embeds: [waifuEmbed] };
+	},
+
 	claimedWaifu: (waifu: AnilistWaifu, userId: string): { embeds: EmbedBuilder[] } => {
 		const loli = isNaN(parseInt(waifu.age)) ? false : parseInt(waifu.age) < 16 ? true : false;
 
