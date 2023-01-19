@@ -1,5 +1,5 @@
 import { createReadStream, createWriteStream, rmSync } from "fs";
-import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ApplicationCommandOptionType, ActionRowBuilder, ButtonBuilder, ButtonStyle, Colors } from "discord.js";
+import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ApplicationCommandOptionType, ActionRowBuilder, ButtonBuilder, ButtonStyle, bold } from "discord.js";
 import { UserModel, User } from "../../../database/models/user";
 import Anilist from "../../../classes/Anilist";
 
@@ -7,6 +7,7 @@ import * as PImage from "pureimage";
 import { Document } from "mongoose";
 import { randomInt } from "../../../utils/utils";
 import customEmbeds from "../../../utils/customEmbeds";
+import { ObtentionWay } from "../../../classes/ObtentionWay";
 const charImageDimensions = { width: 128, height: 213 };
 const users: { [key: string]: Document<any, any, User> } = {};
 
@@ -37,34 +38,62 @@ export default {
 	],
 
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-		await interaction.deferReply({ ephemeral: false });
+		// await interaction.deferReply({ ephemeral: false });
 		const userOne = interaction.user;
 		const userOneId = userOne.id;
 		const userOneDatabaseProfile = await UserModel.findOne({ id: userOneId }); // TODO: users[userOneId] ??
 		if (!userOneDatabaseProfile) {
-			await interaction.editReply("Vous n'avez pas de profil enregistré.");
+			await interaction.reply({ content: "You don't have a profile registered.", ephemeral: true });
 			return;
 		}
 
 		const userTwo = interaction.options.getUser("user")!;
+
 		const userTwoId = userTwo.id;
 		const userTwoDatabaseProfile = await UserModel.findOne({ id: userTwoId }); // TODO: users[userOneId] ??
 		if (!userTwoDatabaseProfile) {
-			await interaction.editReply("L'utilisateur avec qui vous souhaitez échanger n'a pas de profil enregistré.");
+			await interaction.reply({ content: "The user with whom you want to trade doesn't have a profile registered.", ephemeral: true });
 			return;
 		}
 
 		const userOneWaifuId = interaction.options.getString("give")!;
 		const userTwoWaifuId = interaction.options.getString("receive")!;
 
-		const userOneWaifu = await Anilist.getWaifuById(userOneWaifuId);
-		const userTwoWaifu = await Anilist.getWaifuById(userTwoWaifuId);
+		const userOneWaifuList = userOneDatabaseProfile.waifus;
+		const userTwoWaifuList = userTwoDatabaseProfile.waifus;
+
+		if (userOneWaifuList === undefined || userOneWaifuList.length === 0) {
+			await interaction.reply({ content: "You don't have any waifu registered.", ephemeral: true });
+			return;
+		}
+
+		if (userTwoWaifuList === undefined || userTwoWaifuList.length === 0) {
+			await interaction.reply({ content: "The user with whom you want to trade doesn't have any waifu registered.", ephemeral: true });
+			return;
+		}
+
+		const userOneWaifu = userOneWaifuList.find((waifu) => waifu.id.toString() === userOneWaifuId);
+		const userTwoWaifu = userTwoWaifuList.find((waifu) => waifu.id.toString() === userTwoWaifuId);
+
+		const userOneAnilistWaifu = await Anilist.getWaifuById(userOneWaifuId);
+		const userTwoAnilistWaifu = await Anilist.getWaifuById(userTwoWaifuId);
+
+		if (!userOneWaifu) {
+			await interaction.reply({ content: `You don't have ${bold(userOneAnilistWaifu.name.full)} registered.`, ephemeral: true });
+			return;
+		}
+
+		if (!userTwoWaifu) {
+			await interaction.reply({ content: `The user with whom you want to trade doesn't have ${bold(userTwoAnilistWaifu.name.full)} registered.`, ephemeral: true });
+			return;
+		}
+
 
 		const megaCanvas = PImage.make(charImageDimensions.width * 3, charImageDimensions.height, {});
 		const c = megaCanvas.getContext("2d");
 
-		const userOneWaifuImageReadStream = createReadStream(`./assets/images/${userOneWaifu.id}.png`);
-		const userOneWaifuImage = await PImage[userOneWaifu.image.large.endsWith("png") ? "decodePNGFromStream" : "decodeJPEGFromStream"](
+		const userOneWaifuImageReadStream = createReadStream(`./assets/images/${userOneAnilistWaifu.id}.png`);
+		const userOneWaifuImage = await PImage[userOneAnilistWaifu.image.large.endsWith("png") ? "decodePNGFromStream" : "decodeJPEGFromStream"](
 			userOneWaifuImageReadStream
 		);
 		await c.drawImage(
@@ -79,8 +108,8 @@ export default {
 			charImageDimensions.height // destination dimensions
 		);
 
-		const userTwoWaifuImageReadStream = createReadStream(`./assets/images/${userTwoWaifu.id}.png`);
-		const userTwoWaifuImage = await PImage[userTwoWaifu.image.large.endsWith("png") ? "decodePNGFromStream" : "decodeJPEGFromStream"](
+		const userTwoWaifuImageReadStream = createReadStream(`./assets/images/${userTwoAnilistWaifu.id}.png`);
+		const userTwoWaifuImage = await PImage[userTwoAnilistWaifu.image.large.endsWith("png") ? "decodePNGFromStream" : "decodeJPEGFromStream"](
 			userTwoWaifuImageReadStream
 		);
 		await c.drawImage(
@@ -99,8 +128,8 @@ export default {
 		await PImage.encodePNGToStream(megaCanvas, createWriteStream(imageName));
 		const { embeds, files } = customEmbeds.tradeWaifus(
 			[
-				{ userId: userOneId, waifu: userOneWaifu },
-				{ userId: userTwoId, waifu: userTwoWaifu },
+				{ userId: userOneId, waifu: userOneAnilistWaifu },
+				{ userId: userTwoId, waifu: userTwoAnilistWaifu },
 			],
 			imageName
 		);
@@ -126,26 +155,42 @@ export default {
 			message.awaitMessageComponent({ filter: (i) => i.user.id === userTwoId, time: 60000 }).then(async (i) => {
 				if (i.customId === 'accept') {
 					console.log("Echange accepté");
+
+					userOneDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(userTwoAnilistWaifu, ObtentionWay.trade));
+					userTwoDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(userOneAnilistWaifu, ObtentionWay.trade));
+
+					console.debug(userOneDatabaseProfile.waifus.splice(userOneDatabaseProfile.waifus.findIndex((waifu) => waifu.id.toString() === userOneWaifuId), 1));
+					console.debug(userTwoDatabaseProfile.waifus.splice(userTwoDatabaseProfile.waifus.findIndex((waifu) => waifu.id.toString() === userTwoWaifuId), 1));
+
+					userOneDatabaseProfile.save();
+					userTwoDatabaseProfile.save();
+
 					// Récupération de l'embed de succès pour remplacer l'embed d'origine
 					const { embeds } = customEmbeds.tradeSuccess(
 						[
-							{ userId: userOneId, waifu: userOneWaifu },
-							{ userId: userTwoId, waifu: userTwoWaifu },
+							{ userId: userOneId, waifu: userOneAnilistWaifu },
+							{ userId: userTwoId, waifu: userTwoAnilistWaifu },
 						],
 						imageName
 					);
-					i.update({ embeds, components: [] });
+					interaction.editReply({ embeds, components: [] });
 				} else if (i.customId === 'decline') {
 					console.log("Echange refusé");
+					embeds[0].setTitle("Trade was declined.").setColor(0xff0000);
+					interaction.editReply({ embeds, files, components: [] });
 				} else {
 					console.log("Echange annulé");
 				}
-			}).catch(async (error) => {
-				await interaction.editReply("Le temps imparti pour accepter l'échange est écoulé.");
-				console.log(error);
-			}).then(async () => {
+				// If there is an error, log it and cancel the trade
+				// If the user doesn't answer in time, cancel the trade
+			}).catch((err) => {
+				embeds[0].setTitle("Trade was canceled.").setColor(0xff6600);
+				interaction.editReply({ embeds, files, components: [] });
+				console.log(err);
+			}).then(() => {
 				rmSync(imageName);
 			});
+
 		});
 	},
 	type: ApplicationCommandType.ChatInput,
