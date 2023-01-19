@@ -1,7 +1,10 @@
 import { readFileSync } from "fs";
-import { EmbedBuilder, AttachmentBuilder, Colors, User as DiscordUser } from "discord.js";
+import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser, Embed } from "discord.js";
 import { AnilistWaifu } from "../classes/Anilist";
+import { Waifu } from "../classes/Waifu";
+import { rgbToHex } from "./utils";
 import { User as DatabaseUser } from "../database/models/user";
+
 
 function getObfuscatedWaifuName(words: string): string {
 	let letters: string[] = [];
@@ -75,6 +78,28 @@ export default {
 			)
 			.setImage("attachment://nope.png")
 			.setColor(loli ? Colors.Red : Colors.Green);
+		return { embeds: [waifuEmbed] };
+	},
+
+	displayWaifuInlist: (waifu: Waifu, actualIndex: string, MaxIndex: string, username: string, color: Array<number>): { embeds: EmbedBuilder[] } => {
+		const hexColor: ColorResolvable = rgbToHex(color[0], color[1], color[2]) as ColorResolvable
+		const footer = (parseInt(actualIndex) + 1).toString() + "/" + (parseInt(MaxIndex) + 1).toString()
+		const waifuEmbed = new EmbedBuilder()
+			.setTitle(username + "'s list")
+			.setColor(hexColor)
+			.setDescription(waifu.name + " (" + waifu.id + ") " + "\n\n" + (waifu.media?.title.english == undefined ? (waifu.media?.title.romaji == undefined ? "" : "*" + waifu.media?.title.romaji + "*") : "*" + waifu.media?.title.english + "*"))
+			.setImage(waifu.image)
+			.setFooter({ text: footer })
+		return { embeds: [waifuEmbed] };
+	},
+
+	updateWaifuInlist: (waifu: Waifu, actualIndex: string, color: Array<number>, embed: Embed): { embeds: EmbedBuilder[] } => {
+		const hexColor: ColorResolvable = rgbToHex(color[0], color[1], color[2]) as ColorResolvable
+		const waifuEmbed = EmbedBuilder.from(embed)
+			.setColor(hexColor)
+			.setDescription(waifu.name + " (" + waifu.id + ") " + "\n\n" + (waifu.media?.title.english == undefined ? (waifu.media?.title.romaji == undefined ? "" : "*" + waifu.media?.title.romaji + "*") : "*" + waifu.media?.title.english + "*"))
+			.setImage(waifu.image)
+			.setFooter({ text: embed.footer!.text.replace(/\d+\//, (parseInt(actualIndex) + 1).toString() + "/") })
 		return { embeds: [waifuEmbed] };
 	},
 

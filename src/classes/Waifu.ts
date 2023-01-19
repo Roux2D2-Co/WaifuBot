@@ -5,6 +5,13 @@ export interface Waifu {
 	date: Date;
 	name: string;
 	image: string;
+	media?: {
+		id: string;
+		title: {
+			romaji: string;
+			english: string;
+		};
+	};
 	type: ObtentionWay;
 	id: number;
 }
@@ -28,6 +35,22 @@ export const WaifuSchema = new Schema({
 		required: false,
 		enum: ObtentionWay,
 		default: ObtentionWay.other,
+	},
+	media: {
+		id: {
+			type: String,
+			required : false,
+		},
+		title: {
+			romaji: {
+				type: String,
+				required: false,
+			},
+			english: {
+				type: String,
+				required: false,
+			},
+		},
 	},
 	id: {
 		type: Number,
