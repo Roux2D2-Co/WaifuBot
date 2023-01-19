@@ -40,7 +40,7 @@ export default {
 		await interaction.deferReply({ ephemeral: false });
 		const userOne = interaction.user;
 		const userOneId = userOne.id;
-		const userOneDatabaseProfile = users[userOneId] ?? (await UserModel.findOne({ id: userOneId }));
+		const userOneDatabaseProfile = await UserModel.findOne({ id: userOneId }); // TODO: users[userOneId] ??
 		if (!userOneDatabaseProfile) {
 			await interaction.editReply("Vous n'avez pas de profil enregistré.");
 			return;
@@ -48,7 +48,7 @@ export default {
 
 		const userTwo = interaction.options.getUser("user")!;
 		const userTwoId = userTwo.id;
-		const userTwoDatabaseProfile = users[userTwoId] ?? (await UserModel.findOne({ id: userTwoId }));
+		const userTwoDatabaseProfile = await UserModel.findOne({ id: userTwoId }); // TODO: users[userOneId] ??
 		if (!userTwoDatabaseProfile) {
 			await interaction.editReply("L'utilisateur avec qui vous souhaitez échanger n'a pas de profil enregistré.");
 			return;
