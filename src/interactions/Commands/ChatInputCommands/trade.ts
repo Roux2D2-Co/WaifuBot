@@ -150,7 +150,7 @@ export default {
 			);
 
 
-
+		await interaction.deferReply({ ephemeral: false });
 		await interaction.editReply({ embeds, files, components: [row] }).then((message) => {
 			message.awaitMessageComponent({ filter: (i) => i.user.id === userTwoId, time: 60000 }).then(async (i) => {
 				if (i.customId === 'accept') {

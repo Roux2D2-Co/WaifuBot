@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser, Embed } from "discord.js";
+import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser, Embed, bold } from "discord.js";
 import { AnilistWaifu } from "../classes/Anilist";
 import { Waifu } from "../classes/Waifu";
 import { rgbToHex } from "./utils";
@@ -130,9 +130,9 @@ export default {
 			.setTitle("Waifu Trade")
 			.setDescription(`<@${users[0].userId}> wants to trade with <@${users[1].userId}>`)
 			.addFields(
-				{ name: "\u200b", value: users[0]!.waifu!.name!.full, inline: true },
-				{ name: "\u200b", value: "Versus", inline: true },
-				{ name: "\u200b", value: users[1]!.waifu!.name!.full, inline: true }
+				{ name: "\u200b", value: bold(users[0]!.waifu!.name!.full), inline: true },
+				{ name: "\u200b", value: "for", inline: true },
+				{ name: "\u200b", value: bold(users[1]!.waifu!.name!.full), inline: true }
 			)
 			.setImage("attachment://trade.png")
 			.setColor(Colors.White);
@@ -146,9 +146,9 @@ export default {
 			.setTitle("Trade Success !")
 			.setDescription(`<@${users[0].userId}> successfully trade with <@${users[1].userId}> (Date : ${new Date().toLocaleString()})`)
 			.addFields(
-				{ name: "\u200b", value: users[0]!.waifu!.name!.full, inline: true },
-				{ name: "\u200b", value: "Versus", inline: true },
-				{ name: "\u200b", value: users[1]!.waifu!.name!.full, inline: true }
+				{ name: "\u200b", value: bold(users[0]!.waifu!.name!.full), inline: true },
+				{ name: "\u200b", value: "for", inline: true },
+				{ name: "\u200b", value: bold(users[1]!.waifu!.name!.full), inline: true }
 			)
 			.setImage("attachment://trade.png")
 			.setColor(Colors.Green);
