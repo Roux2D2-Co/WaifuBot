@@ -2,11 +2,12 @@ import mongoose from "mongoose";
 import { Waifu, WaifuSchema } from "../../classes/Waifu";
 
 export interface User {
-	id : string;
-	quote : string;
-	waifus : Waifu[];
-	favorite : Waifu;
-	deleteDate : Date;
+	id: string;
+	quote?: string;
+	waifus: Waifu[];
+	favorite?: Waifu;
+	deleteDate?: Date;
+	nextRoll: Date;
 }
 
 export const UserSchema = new mongoose.Schema({
@@ -21,7 +22,10 @@ export const UserSchema = new mongoose.Schema({
 		type: WaifuSchema,
 		require: false,
 	},
-
+	nextRoll: {
+		type: Date,
+		require: false,
+	},
 	deleteDate: { type: Date, require: false },
 });
 
@@ -34,4 +38,4 @@ UserSchema.pre("validate", { document: true }, function (next) {
 	next();
 });
 
-export const UserModel = mongoose.model("user", UserSchema);
+export const UserModel = mongoose.model<User>("user", UserSchema);

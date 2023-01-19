@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
-import { EmbedBuilder, AttachmentBuilder, Colors, ActionRowBuilder, ButtonBuilder } from "discord.js";
+import { EmbedBuilder, AttachmentBuilder, Colors, User as DiscordUser } from "discord.js";
 import { AnilistWaifu } from "../classes/Anilist";
+import { User as DatabaseUser } from "../database/models/user";
 
 function getObfuscatedWaifuName(words: string): string {
 	let letters: string[] = [];
@@ -49,6 +50,14 @@ export default {
 		return { embeds: [waifuEmbed], files: [attachment] };
 	},
 
+	rolledWaifu: (waifu: AnilistWaifu): { embeds: EmbedBuilder[] } => {
+		const waifuEmbed = new EmbedBuilder()
+			.setTitle(waifu.name.full)
+			.setDescription(`Congratulations!\nYou just claimed ${waifu.name.full} (${waifu.id})!`)
+			.setThumbnail(waifu.image.large);
+		return { embeds: [waifuEmbed] };
+	},
+
 	claimedWaifu: (waifu: AnilistWaifu, userId: string): { embeds: EmbedBuilder[] } => {
 		const loli = isNaN(parseInt(waifu.age)) ? false : parseInt(waifu.age) < 16 ? true : false;
 
@@ -70,35 +79,24 @@ export default {
 		return { embeds: [waifuEmbed] };
 	},
 
-	tradeWaifus: (users: { userId: string; waifu: AnilistWaifu }[], imagePath: string): { embeds: EmbedBuilder[]; files: AttachmentBuilder[] } => {
-		const attachment = new AttachmentBuilder(readFileSync(imagePath), { name: "trade.png" });
-
-		const waifuEmbed = new EmbedBuilder()
-			.setTitle("Waifu Trade")
-			.setDescription(`<@${users[0].userId}> wants to trade with <@${users[1].userId}>`)
-			.addFields(
-				{ name: "\u200b", value: users[0]!.waifu!.name!.full, inline: true },
-				{ name: "\u200b", value: "Versus", inline: true },
-				{ name: "\u200b", value: users[1]!.waifu!.name!.full, inline: true }
+	profile: (userProfile: DatabaseUser, discordUser: DiscordUser): { embeds: EmbedBuilder[] } => {
+		const profileEmbed = new EmbedBuilder()
+			.setTitle(`${discordUser.username}`)
+			.setDescription(
+				`
+				${userProfile.quote}
+				${discordUser.username} ${
+					!!userProfile.nextRoll
+						? userProfile?.nextRoll < new Date()
+							? `is able to roll`
+							: `will be able to roll <t:${Math.round(userProfile.nextRoll?.getTime() / 1000)}:R>`
+						: ""
+				}
+				They have ${userProfile.waifus.length} characters.
+				${userProfile?.favorite ? `Their favorite character is ${userProfile.favorite.name}` : ""}
+				`
 			)
-			.setImage("attachment://trade.png")
-			.setColor(Colors.White);
-		return { embeds: [waifuEmbed], files: [attachment] };
-	},
-
-	tradeSuccess: (users: { userId: string; waifu: AnilistWaifu }[], imagePath: string): { embeds: EmbedBuilder[]; files: AttachmentBuilder[] } => {
-		const attachment = new AttachmentBuilder(readFileSync(imagePath), { name: "trade.png" });
-
-		const waifuEmbed = new EmbedBuilder()
-			.setTitle("Trade Success !")
-			.setDescription(`<@${users[0].userId}> successfully trade with <@${users[1].userId}> at time ${new Date().toLocaleString()}`)
-			.addFields(
-				{ name: "\u200b", value: users[0]!.waifu!.name!.full, inline: true },
-				{ name: "\u200b", value: "Versus", inline: true },
-				{ name: "\u200b", value: users[1]!.waifu!.name!.full, inline: true }
-			)
-			.setImage("attachment://trade.png")
-			.setColor(Colors.Green);
-		return { embeds: [waifuEmbed], files: [attachment] };
+			.setThumbnail(userProfile?.favorite?.image ?? null);
+		return { embeds: [profileEmbed] };
 	},
 };
