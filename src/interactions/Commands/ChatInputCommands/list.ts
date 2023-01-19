@@ -25,7 +25,6 @@ export default {
     ],
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        await interaction.deferReply({ ephemeral: false });
         let user = interaction.user;
         let userOption = interaction.options.getUser("user");
         if (!!userOption) {
@@ -33,10 +32,12 @@ export default {
         }
         let userDatabaseProfile = await UserModel.findOne({ id: user.id });
         if (!userDatabaseProfile) {
+            await interaction.deferReply({ ephemeral: true });
             await interaction.editReply("Impossible vous n'avez pas d'identifiant !!");
             return;
         }
         else if (userDatabaseProfile!.waifus.length === 0) {
+            await interaction.deferReply({ ephemeral: true });
             await interaction.editReply("Vous n'avez pas encore de waifu.");
             return;
         }
@@ -63,10 +64,15 @@ export default {
                 }
                 if (waifusInSeries.length !== 0) {
                     waifuTab = waifusInSeries;
+                    await interaction.deferReply({ ephemeral: false });
                 } else {
+                    await interaction.deferReply({ ephemeral: true });
                     await interaction.editReply({ content: "Aucune waifu n'a été trouvée dans cette série." });
                     return;
                 }
+            }
+            else {
+                await interaction.deferReply({ ephemeral: false });
             }
             // Case when player has waifus to display
             let str: String;
@@ -99,7 +105,13 @@ export default {
             let collector = response.createMessageComponentCollector({ componentType: ComponentType.Button, time: 240000 });
             collector.on("collect", async (collectorInteraction) => {
                 if (collectorInteraction.customId.includes("goToOnList")) {
-                    let user = interaction.user;
+                    let secondUserFromDB = await UserModel.findOne({ id: user.id });
+                    //check if the user still have the waifu
+                    if (secondUserFromDB!.waifus.length !== userDatabaseProfile!.waifus.length) {
+                        collector.stop();
+                        await interaction.editReply({ content: "Vous avez perdu une waifu pendant que vous regardiez la liste, veuillez recharger la liste.", components: [], embeds: [] });
+                        return;
+                    }
                     let splitted = collectorInteraction.message.embeds[0].footer!.text.split(" ");
                     let actualIndex = parseInt(splitted[splitted.length - 1].split("/")[0]) - 1;
                     let actionToDo = parseInt(collectorInteraction.customId.split("_")[1]);
