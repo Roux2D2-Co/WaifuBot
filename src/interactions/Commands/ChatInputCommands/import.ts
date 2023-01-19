@@ -1,6 +1,7 @@
 import axios from "axios";
 import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
-import { UserModel } from "../../../database/models/user";
+import { getAllMediasForAllWaifus } from "../../../utils/utils";
+import { User, UserModel } from "../../../database/models/user";
 
 const WAIFU_API_URL = "https://waifuapi.karitham.dev/user/";
 export default {
@@ -14,15 +15,19 @@ export default {
 		const userId = interaction.user.id;
 		let userDatabaseProfile = await UserModel.findOne({ id: userId });
 		if (!!userDatabaseProfile) {
-			await interaction.editReply("Votre profil a déjà été importé.");
+			await interaction.editReply("Votre profil a déjà été importé... Suppression...");
+			await UserModel.deleteOne({ id: userId });
+		}
+		const { data: userProfile, status } = await axios.get(`${WAIFU_API_URL}${userId}`, { transformResponse: (data) => JSON.parse(data) });
+		if (status !== 200) {
+			await interaction.editReply("Une erreur est survenue lors de la récupération de votre profil.");
 			return;
 		} else {
-			const { data: userProfile, status } = await axios.get(`${WAIFU_API_URL}${userId}`, { transformResponse: (data) => JSON.parse(data) });
-			if (status !== 200) {
-				await interaction.editReply("Une erreur est survenue lors de la récupération de votre profil.");
+			userDatabaseProfile = new UserModel(userProfile);
+			if (!await getAllMediasForAllWaifus(userDatabaseProfile as User)) {
+				await interaction.editReply("Une erreur est survenue lors de la récupération des médias de vos waifus.");
 				return;
 			} else {
-				userDatabaseProfile = new UserModel(userProfile);
 				await userDatabaseProfile.save();
 				await interaction.editReply("Votre profil a bien été importé.");
 			}
