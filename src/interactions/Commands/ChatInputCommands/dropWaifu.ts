@@ -3,6 +3,9 @@ import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
 
+let timeMap = new Map<string, number>();
+
+
 export default {
 	dmPermission: false,
 	description: "Fait apparaitre une waifu",
@@ -17,6 +20,10 @@ export default {
 			//TODO : Gérer le cas où le mec a pas de profil
 			await interaction.editReply("Fuck j'ai pas géré le cas où le mec a pas de profil");
 		} else {
+			if (timeMap.get(interaction.guild!.id) && timeMap.get(interaction.guild!.id)! > Date.now()) {
+				await interaction.editReply("Il faut attendre 30 secondes entre chaque waifu");
+				return;
+			}
 			const randomWaifu = await Anilist.getRandomCharacter();
 			interaction.guild!.waifu = randomWaifu;
 			const { embeds, files } = await customEmbeds.randomWaifu(randomWaifu);
@@ -25,6 +32,7 @@ export default {
 				c.send({ embeds, files }).then((m) => (interaction.guild!.waifuMessage = m));
 				interaction.deleteReply();
 				console.log(randomWaifu.name);
+				timeMap.set(interaction.guild!.id, Date.now() + 30000);
 			});
 		}
 	},
