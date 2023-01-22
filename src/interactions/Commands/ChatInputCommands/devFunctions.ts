@@ -17,21 +17,24 @@ import {
 	RoleSelectMenuBuilder,
 	MentionableSelectMenuBuilder,
 	ChannelSelectMenuBuilder,
-	Message,
 	ModalBuilder,
 	TextInputBuilder,
 	TextInputStyle,
 	ModalSubmitInteraction,
 	bold,
+	GuildMemberResolvable,
+	UserResolvable,
+	APIChatInputApplicationCommandInteractionData,
+	APIApplicationCommandInteractionWrapper,
 } from "discord.js";
-
-import { readdirSync } from "fs";
-import { client } from "src";
+import { client } from "../../../index";
+import { readdirSync, writeFileSync } from "fs";
+import { MockedInteraction } from "../../../utils/discordMock";
 
 const localCommands = new Map<string, ChatInputApplicationCommandData>();
 const thisFileName = __filename.split("\\").reverse()[0];
 const getFullCommandPath = /(?<command>\w+?(?= |$))(?: ?(?<subCommandGroup>\w+?(?= |$|\W))?(?=.+$) ?(?<subCommand>\w+))?/gm;
-type getFullCommandPathGroupsResult = { command: string; subCommandGroup?: string; subCommand?: string };
+type CommandNames = { command: string; subCommandGroup?: string; subCommand?: string };
 
 (async () => {
 	for await (const file of readdirSync(__dirname).filter((file) => file.endsWith(".js"))) {
@@ -68,9 +71,8 @@ export default {
 				},
 			],
 			execute: async (interaction: ChatInputCommandInteraction) => {
-				let user = interaction.options.getUser("user", true);
 				let commandPath = interaction.options.getString("command", true);
-				let { command, subCommandGroup, subCommand } = (getFullCommandPath.exec(commandPath)?.groups as getFullCommandPathGroupsResult) ?? {
+				let { command, subCommandGroup, subCommand } = (getFullCommandPath.exec(commandPath)?.groups as CommandNames) ?? {
 					groups: { command: "", subCommandGroup: "", subCommand: "" },
 				};
 				if (!localCommands.has(command)) return interaction.editReply("Cette commande n'existe pas");
@@ -96,17 +98,24 @@ export default {
 				}
 
 				const optionsMap = await collectVariables(interaction, executableCommand.options);
-				console.log(optionsMap);
-				const options: { [key: string]: any } = {};
-				for (const [key, value] of optionsMap) {
-					options[key] = value;
+				const options: OptionAndValue[] = [];
+				for (const [, value] of optionsMap) {
+					options.push(value);
 				}
 
-				const interactionJson = interaction.toJSON();
-				console.log(interactionJson);
-
-				await interaction.editReply({ content: "Récupération des options terminées\n\n" + JSON.stringify(options, null, 2) });
-				await interaction.followUp({ content: "test follow up visible depuis une interaction ephermal", ephemeral: false });
+				const interactionJson = interaction.toJSON() as { [key: string]: any };
+				interactionJson.options = interaction.options.data;
+				const newInteraction = (await getNewInteraction(
+					interaction,
+					{ command, subCommandGroup, subCommand },
+					options
+				)) as ChatInputCommandInteraction;
+				try {
+					localCommand.execute(newInteraction);
+				} catch (e) {
+					console.error(e);
+					interaction.editReply("Une erreur est survenue");
+				}
 			},
 		},
 	],
@@ -169,14 +178,16 @@ export default {
 	type: ApplicationCommandType.ChatInput,
 } as ChatInputApplicationCommandData;
 
+type OptionAndValue = ApplicationCommandOptionData & { value: any };
+
 async function collectVariables(
 	interaction: ChatInputCommandInteraction,
 	options: ApplicationCommandOptionData[] | undefined
-): Promise<Map<string, any>> {
+): Promise<Map<string, OptionAndValue>> {
 	const collectorFilter = (i: MessageComponentInteraction) => i.user.id === interaction.user.id;
-	const valuesMap = new Map<string, any>();
+	const valuesMap = new Map<string, OptionAndValue>();
 
-	for await (const option of options ?? []) {
+	for await (const option of (options as OptionAndValue[]) ?? []) {
 		let components: any[] = [];
 
 		if (
@@ -233,9 +244,9 @@ async function collectVariables(
 
 		//on ajoute le bouton de validation quel que soit le type de l'option
 		let validationButton = new ButtonBuilder().setCustomId("validate").setLabel("Valider mon choix");
-		if(option.required){
-			validationButton.setStyle(ButtonStyle.Danger).setDisabled(true)
-		}else{
+		if (option.required) {
+			validationButton.setStyle(ButtonStyle.Danger).setDisabled(true);
+		} else {
 			validationButton.setStyle(ButtonStyle.Success);
 		}
 		components.push(new ActionRowBuilder<ButtonBuilder>().addComponents(validationButton));
@@ -266,7 +277,8 @@ async function collectVariables(
 					if (i.isAnySelectMenu() && i.values.length === 1) {
 						let responseComponents = [...components];
 						responseComponents[responseComponents.length - 1].components[0].setDisabled(false).setStyle(ButtonStyle.Success);
-						valuesMap.set(option.name, i.values[0]);
+						option.value = i.values[0];
+						valuesMap.set(option.name, option);
 						i.update({ components: responseComponents });
 					} else if (i.isButton()) {
 						//si c'est un bouton ça veut dire qu'on cherche à obtenir un string/number/integer donc on a besoin d'un modal
@@ -282,11 +294,12 @@ async function collectVariables(
 						i.showModal(modal);
 						const filter = (subI: ModalSubmitInteraction) => subI.customId === modal.data.custom_id;
 						interaction.awaitModalSubmit({ filter, time: 30_000 }).then((subI) => {
-							valuesMap.set(option.name, subI.fields.getTextInputValue(option.name));
+							option.value = subI.fields.getTextInputValue(option.name);
+							valuesMap.set(option.name, option);
 							let responseComponents = [...components];
 							responseComponents[responseComponents.length - 1].components[0].setDisabled(false).setStyle(ButtonStyle.Success);
 							i.editReply({
-								content: messageContent + `\nValeur actuelle de l'option ${bold(option.name)} : ${valuesMap.get(option.name)}`,
+								content: messageContent + `\nValeur actuelle de l'option ${bold(option.name)} : ${option.value}`,
 								components: responseComponents,
 							});
 							subI.reply({ content: "valeur enregitrés", ephemeral: true }).then(() => {
@@ -300,4 +313,118 @@ async function collectVariables(
 	}
 
 	return valuesMap;
+}
+
+async function getNewInteraction(interaction: ChatInputCommandInteraction, commandNames: CommandNames, options: OptionAndValue[] = []) {
+	const localCommand = localCommands.get(commandNames.command)!;
+	let discordCommand;
+	if (!!localCommand.guilds && localCommand.guilds.length > 0) {
+		discordCommand = await interaction.guild?.commands.fetch().then((cList) => cList.find((c) => c.name === commandNames.command));
+	} else {
+		discordCommand = await interaction.client.application?.commands.fetch().then((cList) => cList.find((c) => c.name === commandNames.command));
+	}
+
+	const targetUser = interaction.options.getUser("user", true);
+	const targetMember = await interaction.guild?.members.fetch(targetUser.id).catch(() => null);
+	const target = {
+		user: {
+			username: targetUser?.username,
+			public_flags: targetUser?.flags?.bitfield,
+			id: targetUser.id,
+			discriminator: targetUser.discriminator,
+			avatar: targetUser.avatar,
+		},
+		roles: Array.isArray(targetMember?.roles) ? targetMember?.roles : targetMember?.roles.cache.map((r) => r.id),
+		premium_since: targetMember?.premiumSinceTimestamp,
+		permissions: targetMember?.permissions.bitfield,
+		pending: targetMember?.pending,
+		nick: targetMember?.nickname,
+		mute: targetMember?.voice.mute,
+		joined_at: targetMember?.joinedAt?.toISOString(),
+		is_pending: targetMember?.pending,
+		flags: 0,
+		deaf: targetMember?.voice.deaf,
+		communication_disabled_until: targetMember?.communicationDisabledUntilTimestamp,
+		avatar: targetMember?.avatar,
+	};
+
+	const resolved: { members: { [key: string]: GuildMemberResolvable }; users: { [key: string]: UserResolvable } } = { members: {}, users: {} };
+
+	const formattedOptions = options.map((o) => {
+		if (o.type === ApplicationCommandOptionType.User || o.type === ApplicationCommandOptionType.Mentionable) {
+			client.users.fetch(o.value).then((u) => {
+				resolved.users[u.id] = u;
+
+				interaction.guild?.members.fetch(u.id).then((m) => {
+					if (m) resolved.members[u.id] = m;
+					else throw new Error("Member not found");
+				});
+			});
+		}
+
+		return {
+			name: o.name,
+			type: o.type,
+			value: o.value,
+		};
+	});
+
+	const subCommandGroup = localCommand.options?.find((o) => o.name === commandNames.subCommandGroup) as ApplicationCommandSubGroupData;
+	const subCommand = (subCommandGroup || localCommand)?.options?.find(
+		(o) => o.name === commandNames.subCommand
+	) as ApplicationCommandSubCommandData;
+
+	const commandOptions = [];
+	if (!!subCommand) {
+		if (!!subCommandGroup) {
+			commandOptions.push({
+				name: subCommandGroup.name,
+				type: subCommandGroup.type,
+				options: [
+					{
+						name: subCommand.name,
+						type: subCommand.type,
+						options: formattedOptions,
+					},
+				],
+			});
+		} else {
+			commandOptions.push({
+				name: subCommand.name,
+				type: subCommand.type,
+				options: formattedOptions,
+			});
+		}
+	} else {
+		commandOptions.push(...formattedOptions);
+	}
+
+	if (!discordCommand) throw new Error("Command not found");
+	const interactionJson = {} as {
+		[key in keyof APIApplicationCommandInteractionWrapper<APIChatInputApplicationCommandInteractionData>]: any;
+	};
+	interactionJson.token = interaction.token;
+	interactionJson.app_permissions = interaction.appPermissions?.bitfield;
+	interactionJson.application_id = discordCommand.applicationId;
+	interactionJson.channel_id = interaction.channelId;
+	interactionJson.guild_id = discordCommand.guildId;
+	interactionJson.id = interaction.id;
+	interactionJson.guild_locale = interaction.guildLocale;
+	interactionJson.locale = interaction.locale;
+	interactionJson.member = target;
+	interactionJson.token = interaction.token;
+	interactionJson.type = discordCommand.type;
+	interactionJson.version = discordCommand.version;
+	interactionJson.data = {
+		id: discordCommand.id,
+		name: discordCommand.name,
+		guild_id: interaction.guildId,
+		type: discordCommand.type,
+		resolved,
+		options: commandOptions,
+	};
+	let e = new MockedInteraction(client, interactionJson);
+	e.replied = true;
+	e.ephemeral = true;
+	return e;
 }
