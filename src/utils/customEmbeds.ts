@@ -144,7 +144,7 @@ export default {
 
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle("Trade Success !")
-			.setDescription(`<@${users[0].userId}> successfully trade with <@${users[1].userId}> (Date : ${new Date().toLocaleString()})`)
+			.setDescription(`<@${users[0].userId}> successfully trade with <@${users[1].userId}>\n(Date : ${new Date().toLocaleString()})`)
 			.addFields(
 				{ name: "\u200b", value: bold(users[0]!.waifu!.name!.full), inline: true },
 				{ name: "\u200b", value: "for", inline: true },

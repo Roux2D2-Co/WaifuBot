@@ -41,7 +41,7 @@ export default {
 		// await interaction.deferReply({ ephemeral: false });
 		const userOne = interaction.user;
 		const userOneId = userOne.id;
-		const userOneDatabaseProfile = await UserModel.findOne({ id: userOneId }); // TODO: users[userOneId] ??
+		const userOneDatabaseProfile = await UserModel.findOne({ id: userOneId });
 		if (!userOneDatabaseProfile) {
 			await interaction.reply({ content: "You don't have a profile registered.", ephemeral: true });
 			return;
@@ -50,7 +50,7 @@ export default {
 		const userTwo = interaction.options.getUser("user")!;
 
 		const userTwoId = userTwo.id;
-		const userTwoDatabaseProfile = await UserModel.findOne({ id: userTwoId }); // TODO: users[userOneId] ??
+		const userTwoDatabaseProfile = await UserModel.findOne({ id: userTwoId });
 		if (!userTwoDatabaseProfile) {
 			await interaction.reply({ content: "The user with whom you want to trade doesn't have a profile registered.", ephemeral: true });
 			return;
@@ -88,6 +88,15 @@ export default {
 			return;
 		}
 
+		if (userOneWaifuList.find((waifu) => waifu.id.toString() === userTwoWaifuId)) {
+			await interaction.reply({ content: `You already have ${bold(userTwoAnilistWaifu.name.full)}.`, ephemeral: true });
+			return;
+		} 
+
+		if (userTwoWaifuList.find((waifu) => waifu.id.toString() === userOneWaifuId)) {
+			await interaction.reply({ content: `The user with whom you want to trade already have ${bold(userOneAnilistWaifu.name.full)}.`, ephemeral: true });
+			return;
+		}
 
 		const megaCanvas = PImage.make(charImageDimensions.width * 3, charImageDimensions.height, {});
 		const c = megaCanvas.getContext("2d");
@@ -154,7 +163,7 @@ export default {
 		await interaction.editReply({ embeds, files, components: [row] }).then((message) => {
 			message.awaitMessageComponent({ filter: (i) => i.user.id === userTwoId, time: 60000 }).then(async (i) => {
 				if (i.customId === 'accept') {
-					console.log("Echange accepté");
+					console.log("Exchange accepted");
 
 					userOneDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(userTwoAnilistWaifu, ObtentionWay.trade));
 					userTwoDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(userOneAnilistWaifu, ObtentionWay.trade));
@@ -175,7 +184,7 @@ export default {
 					);
 					interaction.editReply({ embeds, components: [] });
 				} else if (i.customId === 'decline') {
-					console.log("Echange refusé");
+					console.log("Exchange declined");
 					embeds[0].setTitle("Trade was declined.").setColor(0xff0000);
 					interaction.editReply({ embeds, files, components: [] });
 				} else {
