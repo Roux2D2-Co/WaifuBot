@@ -13,25 +13,37 @@ const users: { [key: string]: Document<any, any, User> } = {};
 
 export default {
 	dmPermission: false,
-	description: "Proposer un échange à un utilisateur.",
+	description: "Suggest a waifu trade with another user.",
+	descriptionLocalizations: {
+		fr: "Proposez un échange de waifu avec un autre utilisateur.",
+	},
 	name: "trade",
 	guilds: ["780715935593005088"],
 	options: [
 		{
 			name: "user",
-			description: "L'utilisateur avec qui vous souhaitez échanger.",
+			description: "The user with whom you want to trade.",
+			descriptionLocalizations: {
+				fr: "L'utilisateur avec qui vous souhaitez échanger.",
+			},
 			type: ApplicationCommandOptionType.User,
 			required: true,
 		},
 		{
 			name: "give",
-			description: "Votre waifu à échanger.",
+			description: "Your waifu to trade.",
+			descriptionLocalizations: {
+				fr: "Votre waifu à échanger.",
+			},
 			type: ApplicationCommandOptionType.String,
 			required: true,
 		},
 		{
 			name: "receive",
-			description: "La waifu que vous souhaitez recevoir.",
+			description: "The waifu you want to receive.",
+			descriptionLocalizations: {
+				fr: "La waifu que vous souhaitez recevoir.",
+			},
 			type: ApplicationCommandOptionType.String,
 			required: true,
 		},
@@ -161,8 +173,11 @@ export default {
 
 		await interaction.deferReply({ ephemeral: false });
 		await interaction.editReply({ embeds, files, components: [row] }).then((message) => {
-			message.awaitMessageComponent({ filter: (i) => i.user.id === userTwoId, time: 60000 }).then(async (i) => {
-				if (i.customId === 'accept') {
+			// Wait for the user to accept or decline the trade request (1 minute)
+			// Only accept if the user who clicked is the user who received the trade request
+			// Both users can decline the trade
+			message.awaitMessageComponent({ filter: (i) => i.user.id === userTwoId || (i.user.id === userOneId && i.customId !== 'accept'), time: 60000 }).then(async (i) => {
+				if (i.customId === 'accept') { 
 					console.log("Exchange accepted");
 
 					userOneDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(userTwoAnilistWaifu, ObtentionWay.trade));
@@ -171,10 +186,11 @@ export default {
 					console.debug(userOneDatabaseProfile.waifus.splice(userOneDatabaseProfile.waifus.findIndex((waifu) => waifu.id.toString() === userOneWaifuId), 1));
 					console.debug(userTwoDatabaseProfile.waifus.splice(userTwoDatabaseProfile.waifus.findIndex((waifu) => waifu.id.toString() === userTwoWaifuId), 1));
 
-					userOneDatabaseProfile.save();
+					// Save the new waifus
+					userOneDatabaseProfile.save(); 
 					userTwoDatabaseProfile.save();
 
-					// Récupération de l'embed de succès pour remplacer l'embed d'origine
+					// Get the success embed to replace the original embed
 					const { embeds } = customEmbeds.tradeSuccess(
 						[
 							{ userId: userOneId, waifu: userOneAnilistWaifu },
@@ -185,7 +201,7 @@ export default {
 					interaction.editReply({ embeds, components: [] });
 				} else if (i.customId === 'decline') {
 					console.log("Exchange declined");
-					embeds[0].setTitle("Trade was declined.").setColor(0xff0000);
+					embeds[0].setTitle("Trade was declined.").setColor(0xff0000).setDescription(`The trade from <@${userOneId}> to <@${userTwoId}> was declined by <@${i.user.id}>.`);
 					interaction.editReply({ embeds, files, components: [] });
 				} else {
 					console.log("Echange annulé");
@@ -193,9 +209,8 @@ export default {
 				// If there is an error, log it and cancel the trade
 				// If the user doesn't answer in time, cancel the trade
 			}).catch((err) => {
-				embeds[0].setTitle("Trade was canceled.").setColor(0xff6600);
+				embeds[0].setTitle("Trade was canceled.").setColor(0xff6600).setDescription(`The trade from <@${userOneId}> to <@${userTwoId}> was canceled.\n(Delay expired)`);
 				interaction.editReply({ embeds, files, components: [] });
-				console.log(err);
 			}).then(() => {
 				rmSync(imageName);
 			});

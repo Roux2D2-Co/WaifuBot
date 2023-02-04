@@ -128,11 +128,11 @@ export default {
 
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle("Waifu Trade")
-			.setDescription(`<@${users[0].userId}> wants to trade with <@${users[1].userId}>`)
+			.setDescription(`<@${users[0].userId}> wants to trade with <@${users[1].userId}>. \nYou have 60 seconds to react.`)
 			.addFields(
-				{ name: "\u200b", value: bold(users[0]!.waifu!.name!.full), inline: true },
+				{ name: "\u200b", value: `[${users[0].waifu.name.full}](${users[0].waifu.siteUrl})`, inline: true },
 				{ name: "\u200b", value: "for", inline: true },
-				{ name: "\u200b", value: bold(users[1]!.waifu!.name!.full), inline: true }
+				{ name: "\u200b", value: `[${users[1].waifu.name.full}](${users[1].waifu.siteUrl})`, inline: true }
 			)
 			.setImage("attachment://trade.png")
 			.setColor(Colors.White);
@@ -146,9 +146,9 @@ export default {
 			.setTitle("Trade Success !")
 			.setDescription(`<@${users[0].userId}> successfully trade with <@${users[1].userId}>\n(Date : ${new Date().toLocaleString()})`)
 			.addFields(
-				{ name: "\u200b", value: bold(users[0]!.waifu!.name!.full), inline: true },
+				{ name: "\u200b", value: `[${users[0].waifu.name.full}](${users[0].waifu.siteUrl})`, inline: true },
 				{ name: "\u200b", value: "for", inline: true },
-				{ name: "\u200b", value: bold(users[1]!.waifu!.name!.full), inline: true }
+				{ name: "\u200b", value: `[${users[1].waifu.name.full}](${users[1].waifu.siteUrl})`, inline: true }
 			)
 			.setImage("attachment://trade.png")
 			.setColor(Colors.Green);
