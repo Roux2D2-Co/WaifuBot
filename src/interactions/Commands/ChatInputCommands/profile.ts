@@ -5,10 +5,10 @@ import {
 	ApplicationCommandSubCommandData,
 	ApplicationCommandOptionType,
 	ApplicationCommandSubGroupData,
+	AutocompleteInteraction,
 } from "discord.js";
 import customEmbeds from "../../../utils/customEmbeds";
 import { UserModel, User } from "../../../database/models/user";
-import { autocompleteCharacter } from "../../../utils/utils";
 
 export default {
 	dmPermission: false,
@@ -117,6 +117,22 @@ export default {
 		!!choosenSubcommand && !!choosenSubcommand.execute && choosenSubcommand.execute(interaction);
 	},
 
-	onAutocomplete : autocompleteCharacter,
+	onAutocomplete: async (interaction: AutocompleteInteraction) => {
+		let focusedOption = interaction.options.getFocused(true);
+		if (focusedOption.name !== "character") return;
+		let user = interaction.user;
+		let userProfile = await UserModel.findOne({ id: user.id });
+		if (!userProfile || userProfile.waifus.length === 0) {
+			return interaction.respond([]);
+		} else {
+			let waifus = userProfile.waifus;
+			let input = focusedOption.value.toLowerCase();
+			let filteredWaifus = waifus.filter((waifu) => waifu.name.toLowerCase().includes(input));
+			let waifuOptions = filteredWaifus.map((waifu) => {
+				return { name: waifu.name, value: waifu.id.toString() };
+			}).splice(0, 25);
+			return interaction.respond(waifuOptions);
+		}
+	},
 	type: ApplicationCommandType.ChatInput,
 } as ChatInputApplicationCommandData;

@@ -1,10 +1,8 @@
 import { AutocompleteInteraction } from "discord.js";
-import { UserModel } from "../database/models/user";
+import { UserModel, User } from "../database/models/user";
 
 const colorThief = require("colorthief");
 import axios from "axios";
-import { writeFileSync, rmSync } from "fs";
-import { User } from "../database/models/user";
 
 export function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
@@ -90,8 +88,6 @@ export function componentToHex(c: number) {
 export function rgbToHex(r: number, g: number, b: number) {
 	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
-
-
 
 export async function getAllMediasForAllWaifus(userProfile: User): Promise<boolean> {
 	let nbPages = Math.ceil(userProfile.waifus.length / 50);
