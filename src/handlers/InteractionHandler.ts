@@ -22,7 +22,7 @@ export class InteractionHandler {
 			} else if (interaction.isContextMenuCommand()) {
 				let localInteraction = client.localCommands.get(interaction.commandType)?.get(interaction.commandName) ?? null;
 				localInteraction?.execute(interaction as Interaction);
-			} else if (interaction.isButton() || interaction.isSelectMenu()) {
+			} else if (interaction.isButton() || interaction.isAnySelectMenu()) {
 				let localInteraction = client?.localComponents.get(interaction.customId) ?? null;
 				let regexResult: RegExpExecArray | undefined;
 				if (!localInteraction) {

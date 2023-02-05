@@ -1,7 +1,10 @@
 import { readFileSync } from "fs";
-import { EmbedBuilder, AttachmentBuilder, Colors, User as DiscordUser } from "discord.js";
+import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser, Embed } from "discord.js";
 import { AnilistWaifu } from "../classes/Anilist";
+import { Waifu } from "../classes/Waifu";
+import { rgbToHex } from "./utils";
 import { User as DatabaseUser } from "../database/models/user";
+
 
 function getObfuscatedWaifuName(words: string): string {
 	let letters: string[] = [];
@@ -68,14 +71,35 @@ export default {
 			<@${userId}> claimed **[${waifu.name.full}](https://anilist.co/character/${waifu.id})** !!
 				${waifu.name.full != waifu.name.userPreferred ? `Nom courant: ${waifu.name.userPreferred}` : ""}
 				${waifu.name.alternative.length > 0 ? `Alternatives :\n${waifu.name.alternative.map((t) => `\u200b\t- ${t}`).join("\n")}` : ""}
-				${
-					waifu.name.alternativeSpoiler.length > 0
-						? `Alternatives Spoiler :\n${waifu.name.alternativeSpoiler.map((t) => `\u200b\t- ||${t}||`).join("\n")}`
-						: ""
+				${waifu.name.alternativeSpoiler.length > 0
+					? `Alternatives Spoiler :\n${waifu.name.alternativeSpoiler.map((t) => `\u200b\t- ||${t}||`).join("\n")}`
+					: ""
 				}`
 			)
 			.setImage("attachment://nope.png")
 			.setColor(loli ? Colors.Red : Colors.Green);
+		return { embeds: [waifuEmbed] };
+	},
+
+	displayWaifuInlist: (waifu: Waifu, actualIndex: string, MaxIndex: string, username: string, color: Array<number>): { embeds: EmbedBuilder[] } => {
+		const hexColor: ColorResolvable = rgbToHex(color[0], color[1], color[2]) as ColorResolvable
+		const footer = (parseInt(actualIndex) + 1).toString() + "/" + (parseInt(MaxIndex) + 1).toString()
+		const waifuEmbed = new EmbedBuilder()
+			.setTitle(username + "'s list")
+			.setColor(hexColor)
+			.setDescription(waifu.name + " (" + waifu.id + ") " + "\n\n" + (waifu.media?.title.english == undefined ? (waifu.media?.title.romaji == undefined ? "" : "*" + waifu.media?.title.romaji + "*") : "*" + waifu.media?.title.english + "*"))
+			.setImage(waifu.image)
+			.setFooter({ text: footer })
+		return { embeds: [waifuEmbed] };
+	},
+
+	updateWaifuInlist: (waifu: Waifu, actualIndex: string, color: Array<number>, embed: Embed): { embeds: EmbedBuilder[] } => {
+		const hexColor: ColorResolvable = rgbToHex(color[0], color[1], color[2]) as ColorResolvable
+		const waifuEmbed = EmbedBuilder.from(embed)
+			.setColor(hexColor)
+			.setDescription(waifu.name + " (" + waifu.id + ") " + "\n\n" + (waifu.media?.title.english == undefined ? (waifu.media?.title.romaji == undefined ? "" : "*" + waifu.media?.title.romaji + "*") : "*" + waifu.media?.title.english + "*"))
+			.setImage(waifu.image)
+			.setFooter({ text: embed.footer!.text.replace(/\d+\//, (parseInt(actualIndex) + 1).toString() + "/") })
 		return { embeds: [waifuEmbed] };
 	},
 
@@ -85,12 +109,11 @@ export default {
 			.setDescription(
 				`
 				${userProfile.quote}
-				${discordUser.username} ${
-					!!userProfile.nextRoll
-						? userProfile?.nextRoll < new Date()
-							? `is able to roll`
-							: `will be able to roll <t:${Math.round(userProfile.nextRoll?.getTime() / 1000)}:R>`
-						: ""
+				${discordUser.username} ${!!userProfile.nextRoll
+					? userProfile?.nextRoll < new Date()
+						? `is able to roll`
+						: `will be able to roll <t:${Math.round(userProfile.nextRoll?.getTime() / 1000)}:R>`
+					: ""
 				}
 				They have ${userProfile.waifus.length} characters.
 				${userProfile?.favorite ? `Their favorite character is ${userProfile.favorite.name}` : ""}
