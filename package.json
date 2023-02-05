@@ -18,7 +18,9 @@
     "colorthief": "^2.3.2",
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
+    "gifwrap": "^0.10.1",
     "image-converter": "^1.0.0",
+    "jimp": "^0.17.10",
     "mongoose": "^6.8.3"
   },
   "description": "",

@@ -14,6 +14,7 @@ export interface Waifu {
 	};
 	type: ObtentionWay;
 	id: number;
+	shiny?: boolean;
 }
 
 export const WaifuSchema = new Schema({
@@ -56,5 +57,10 @@ export const WaifuSchema = new Schema({
 		type: Number,
 		required: true,
 		unique: true,
+	},
+	shiny: {
+		type: Boolean,
+		required: false,
+		default: false,
 	},
 });

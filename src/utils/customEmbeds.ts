@@ -32,31 +32,31 @@ function getObfuscatedWaifuName(words: string): string {
 }
 
 export default {
-	randomWaifu: async (waifu: AnilistWaifu): Promise<{ embeds: EmbedBuilder[]; files: AttachmentBuilder[] }> => {
+	randomWaifu: async (waifu: AnilistWaifu, shiny: boolean = false): Promise<{ embeds: EmbedBuilder[]; files: AttachmentBuilder[] }> => {
 		const loli = isNaN(parseInt(waifu.age)) ? false : parseInt(waifu.age) < 16 ? true : false;
 
-		const attachment = new AttachmentBuilder(readFileSync(`./assets/images/${waifu.id}.png`), {
-			name: "nope.png",
+		const attachment = new AttachmentBuilder(await readFileSync(shiny ? `./assets/images/${waifu.id}-shiny.gif` : `./assets/images/${waifu.id}.png`), {
+			name: "nope.gif",
 			description: "tah la waifu",
 		});
 
 		const waifuEmbed = new EmbedBuilder()
-			.setTitle("Random Waifu Dropped !")
+			.setTitle("Random Waifu Dropped !" + (shiny ? " ✨" : ""))
 			.setDescription(
 				`Nom Complet : ${getObfuscatedWaifuName(waifu.name.full)}
 				Nom le plus utilisé : ${getObfuscatedWaifuName(waifu.name.userPreferred)}
 				${waifu.name.alternative.length > 0 ? `Alternatives : ${waifu.name.alternative.length}` : ""}
 				${waifu.name.alternativeSpoiler.length > 0 ? `Alternatives Spoiler : ${waifu.name.alternativeSpoiler.length}` : ""}`
 			)
-			.setImage("attachment://nope.png")
-			.setColor(loli ? Colors.Red : Colors.Gold);
+			.setImage("attachment://nope.gif")
+			.setColor(shiny ? Colors.Gold : (loli ? Colors.Red : Colors.Orange));
 		return { embeds: [waifuEmbed], files: [attachment] };
 	},
 
 	rolledWaifu: (waifu: AnilistWaifu): { embeds: EmbedBuilder[] } => {
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle(waifu.name.full)
-			.setDescription(`Congratulations!\nYou just claimed ${waifu.name.full} (${waifu.id})!`)
+			.setDescription(`You just rolled ${waifu.name.full} (${waifu.id})!`)
 			.setThumbnail(waifu.image.large);
 		return { embeds: [waifuEmbed] };
 	},
@@ -76,8 +76,8 @@ export default {
 					: ""
 				}`
 			)
-			.setImage("attachment://nope.png")
-			.setColor(loli ? Colors.Red : Colors.Green);
+			.setImage("attachment://nope.gif")
+			.setColor(Colors.Green);
 		return { embeds: [waifuEmbed] };
 	},
 
