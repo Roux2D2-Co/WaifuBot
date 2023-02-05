@@ -1,5 +1,15 @@
 import { createReadStream, createWriteStream, rmSync } from "fs";
-import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ApplicationCommandOptionType, ActionRowBuilder, ButtonBuilder, ButtonStyle, bold } from "discord.js";
+import {
+	ChatInputApplicationCommandData,
+	ApplicationCommandType,
+	ChatInputCommandInteraction,
+	ApplicationCommandOptionType,
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+	bold,
+	AutocompleteInteraction,
+} from "discord.js";
 import { UserModel, User } from "../../../database/models/user";
 import Anilist from "../../../classes/Anilist";
 
@@ -31,12 +41,13 @@ export default {
 		},
 		{
 			name: "give",
-			description: "Your waifu to trade.",
+			description: "The waifu you want to give.",
 			descriptionLocalizations: {
-				fr: "Votre waifu à échanger.",
+				fr: "La waifu que vous souhaitez donner.",
 			},
 			type: ApplicationCommandOptionType.String,
 			required: true,
+			autocomplete: true,
 		},
 		{
 			name: "receive",
@@ -46,6 +57,8 @@ export default {
 			},
 			type: ApplicationCommandOptionType.String,
 			required: true,
+			autocomplete: true,
+
 		},
 	],
 
@@ -96,17 +109,23 @@ export default {
 		}
 
 		if (!userTwoWaifu) {
-			await interaction.reply({ content: `The user with whom you want to trade doesn't have ${bold(userTwoAnilistWaifu.name.full)} registered.`, ephemeral: true });
+			await interaction.reply({
+				content: `The user with whom you want to trade doesn't have ${bold(userTwoAnilistWaifu.name.full)} registered.`,
+				ephemeral: true,
+			});
 			return;
 		}
 
 		if (userOneWaifuList.find((waifu) => waifu.id.toString() === userTwoWaifuId)) {
 			await interaction.reply({ content: `You already have ${bold(userTwoAnilistWaifu.name.full)}.`, ephemeral: true });
 			return;
-		} 
+		}
 
 		if (userTwoWaifuList.find((waifu) => waifu.id.toString() === userOneWaifuId)) {
-			await interaction.reply({ content: `The user with whom you want to trade already have ${bold(userOneAnilistWaifu.name.full)}.`, ephemeral: true });
+			await interaction.reply({
+				content: `The user with whom you want to trade already have ${bold(userOneAnilistWaifu.name.full)}.`,
+				ephemeral: true,
+			});
 			return;
 		}
 
@@ -155,67 +174,110 @@ export default {
 			imageName
 		);
 
-		const accept = new ButtonBuilder()
-			.setCustomId('accept')
-			.setLabel('Accept')
-			.setStyle(ButtonStyle.Success).setEmoji("👍");
+		const accept = new ButtonBuilder().setCustomId("accept").setLabel("Accept").setStyle(ButtonStyle.Success).setEmoji("👍");
 
-		const decline = new ButtonBuilder()
-			.setCustomId('decline')
-			.setLabel('Decline')
-			.setStyle(ButtonStyle.Danger).setEmoji("👎");
+		const decline = new ButtonBuilder().setCustomId("decline").setLabel("Decline").setStyle(ButtonStyle.Danger).setEmoji("👎");
 
-		const row = new ActionRowBuilder<ButtonBuilder>()
-			.addComponents(
-				accept, decline
-			);
-
+		const row = new ActionRowBuilder<ButtonBuilder>().addComponents(accept, decline);
 
 		await interaction.deferReply({ ephemeral: false });
 		await interaction.editReply({ embeds, files, components: [row] }).then((message) => {
 			// Wait for the user to accept or decline the trade request (1 minute)
 			// Only accept if the user who clicked is the user who received the trade request
 			// Both users can decline the trade
-			message.awaitMessageComponent({ filter: (i) => i.user.id === userTwoId || (i.user.id === userOneId && i.customId !== 'accept'), time: 60000 }).then(async (i) => {
-				if (i.customId === 'accept') { 
-					console.log("Exchange accepted");
+			message
+				.awaitMessageComponent({
+					filter: (i) => i.user.id === userTwoId || (i.user.id === userOneId && i.customId !== "accept"),
+					time: 60000,
+				})
+				.then(async (i) => {
+					if (i.customId === "accept") {
+						console.log("Exchange accepted");
 
-					userOneDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(userTwoAnilistWaifu, ObtentionWay.trade));
-					userTwoDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(userOneAnilistWaifu, ObtentionWay.trade));
+						userOneDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(userTwoAnilistWaifu, ObtentionWay.trade));
+						userTwoDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(userOneAnilistWaifu, ObtentionWay.trade));
 
-					console.debug(userOneDatabaseProfile.waifus.splice(userOneDatabaseProfile.waifus.findIndex((waifu) => waifu.id.toString() === userOneWaifuId), 1));
-					console.debug(userTwoDatabaseProfile.waifus.splice(userTwoDatabaseProfile.waifus.findIndex((waifu) => waifu.id.toString() === userTwoWaifuId), 1));
+						console.debug(
+							userOneDatabaseProfile.waifus.splice(
+								userOneDatabaseProfile.waifus.findIndex((waifu) => waifu.id.toString() === userOneWaifuId),
+								1
+							)
+						);
+						console.debug(
+							userTwoDatabaseProfile.waifus.splice(
+								userTwoDatabaseProfile.waifus.findIndex((waifu) => waifu.id.toString() === userTwoWaifuId),
+								1
+							)
+						);
 
-					// Save the new waifus
-					userOneDatabaseProfile.save(); 
-					userTwoDatabaseProfile.save();
+						// Save the new waifus
+						userOneDatabaseProfile.save();
+						userTwoDatabaseProfile.save();
 
-					// Get the success embed to replace the original embed
-					const { embeds } = customEmbeds.tradeSuccess(
-						[
-							{ userId: userOneId, waifu: userOneAnilistWaifu },
-							{ userId: userTwoId, waifu: userTwoAnilistWaifu },
-						],
-						imageName
-					);
-					interaction.editReply({ embeds, components: [] });
-				} else if (i.customId === 'decline') {
-					console.log("Exchange declined");
-					embeds[0].setTitle("Trade was declined.").setColor(0xff0000).setDescription(`The trade from <@${userOneId}> to <@${userTwoId}> was declined by <@${i.user.id}>.`);
+						// Get the success embed to replace the original embed
+						const { embeds } = customEmbeds.tradeSuccess(
+							[
+								{ userId: userOneId, waifu: userOneAnilistWaifu },
+								{ userId: userTwoId, waifu: userTwoAnilistWaifu },
+							],
+							imageName
+						);
+						interaction.editReply({ embeds, components: [] });
+					} else if (i.customId === "decline") {
+						console.log("Exchange declined");
+						embeds[0]
+							.setTitle("Trade was declined.")
+							.setColor(0xff0000)
+							.setDescription(`The trade from <@${userOneId}> to <@${userTwoId}> was declined by <@${i.user.id}>.`);
+						interaction.editReply({ embeds, files, components: [] });
+					} else {
+						console.log("Echange annulé");
+					}
+					// If there is an error, log it and cancel the trade
+					// If the user doesn't answer in time, cancel the trade
+				})
+				.catch((err) => {
+					embeds[0]
+						.setTitle("Trade was canceled.")
+						.setColor(0xff6600)
+						.setDescription(`The trade from <@${userOneId}> to <@${userTwoId}> was canceled.\n(Delay expired)`);
 					interaction.editReply({ embeds, files, components: [] });
-				} else {
-					console.log("Echange annulé");
-				}
-				// If there is an error, log it and cancel the trade
-				// If the user doesn't answer in time, cancel the trade
-			}).catch((err) => {
-				embeds[0].setTitle("Trade was canceled.").setColor(0xff6600).setDescription(`The trade from <@${userOneId}> to <@${userTwoId}> was canceled.\n(Delay expired)`);
-				interaction.editReply({ embeds, files, components: [] });
-			}).then(() => {
-				rmSync(imageName);
-			});
-
+				})
+				.then(() => {
+					rmSync(imageName);
+				});
 		});
 	},
 	type: ApplicationCommandType.ChatInput,
+
+	onAutocomplete: async (interaction: AutocompleteInteraction) => {
+		let focusedOption = interaction.options.getFocused(true);
+		let user;
+		if (focusedOption.name === "give") {
+			user = interaction.user;
+		} else if (focusedOption.name === "receive") {
+			let targetUserOption = interaction.options.get("user");
+			if(!targetUserOption || !targetUserOption.value){
+				return interaction.respond([]);
+			}else{
+				user = await interaction.guild?.members.fetch(targetUserOption.value as string);
+			}
+		}
+		if(!user) return interaction.respond([]);
+
+		let userProfile = await UserModel.findOne({ id: user.id });
+		if (!userProfile || userProfile.waifus.length === 0) {
+			return interaction.respond([]);
+		} else {
+			let waifus = userProfile.waifus;
+			let input = focusedOption.value.toLowerCase();
+			let filteredWaifus = waifus.filter((waifu) => waifu.name.toLowerCase().includes(input));
+			let waifuOptions = filteredWaifus
+				.map((waifu) => {
+					return { name: waifu.name, value: waifu.id.toString() };
+				})
+				.splice(0, 25);
+			return interaction.respond(waifuOptions);
+		}
+	},
 } as ChatInputApplicationCommandData;
