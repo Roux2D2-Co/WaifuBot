@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser, Embed } from "discord.js";
+import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser, Embed, bold } from "discord.js";
 import { AnilistWaifu } from "../classes/Anilist";
 import { Waifu } from "../classes/Waifu";
 import { rgbToHex } from "./utils";
@@ -122,4 +122,37 @@ export default {
 			.setThumbnail(userProfile?.favorite?.image ?? null);
 		return { embeds: [profileEmbed] };
 	},
+
+	tradeWaifus: (users: { userId: string; waifu: AnilistWaifu }[], imagePath: string): { embeds: EmbedBuilder[]; files: AttachmentBuilder[] } => {
+		const attachment = new AttachmentBuilder(readFileSync(imagePath), { name: "trade.png" });
+
+		const waifuEmbed = new EmbedBuilder()
+			.setTitle("Waifu Trade")
+			.setDescription(`<@${users[0].userId}> wants to trade with <@${users[1].userId}>. \nYou have 60 seconds to react.`)
+			.addFields(
+				{ name: "\u200b", value: `[${users[0].waifu.name.full}](${users[0].waifu.siteUrl})`, inline: true },
+				{ name: "\u200b", value: "for", inline: true },
+				{ name: "\u200b", value: `[${users[1].waifu.name.full}](${users[1].waifu.siteUrl})`, inline: true }
+			)
+			.setImage("attachment://trade.png")
+			.setColor(Colors.White);
+		return { embeds: [waifuEmbed], files: [attachment] };
+	},
+
+	tradeSuccess: (users: { userId: string; waifu: AnilistWaifu }[], imagePath: string): { embeds: EmbedBuilder[]; files: AttachmentBuilder[] } => {
+		const attachment = new AttachmentBuilder(readFileSync(imagePath), { name: "trade.png" });
+
+		const waifuEmbed = new EmbedBuilder()
+			.setTitle("Trade Success !")
+			.setDescription(`<@${users[0].userId}> successfully trade with <@${users[1].userId}>\n(Date : ${new Date().toLocaleString()})`)
+			.addFields(
+				{ name: "\u200b", value: `[${users[0].waifu.name.full}](${users[0].waifu.siteUrl})`, inline: true },
+				{ name: "\u200b", value: "for", inline: true },
+				{ name: "\u200b", value: `[${users[1].waifu.name.full}](${users[1].waifu.siteUrl})`, inline: true }
+			)
+			.setImage("attachment://trade.png")
+			.setColor(Colors.Green);
+		return { embeds: [waifuEmbed], files: [attachment] };
+	},
+
 };
