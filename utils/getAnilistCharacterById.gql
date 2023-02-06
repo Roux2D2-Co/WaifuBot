@@ -1,0 +1,25 @@
+query charactersRandom($id: Int) {
+	Character(id: $id) {
+		id
+		siteUrl
+		image {
+			large
+		}
+		name {
+			native
+			alternative
+			alternativeSpoiler
+			userPreferred
+			full
+		}
+		gender
+		media(perPage: 1, sort: POPULARITY_DESC) {
+			nodes {
+				title {
+					romaji
+				}
+				isAdult
+			}
+		}
+	}
+}
