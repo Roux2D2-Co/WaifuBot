@@ -1,10 +1,10 @@
 import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ChannelType } from "discord.js";
+import { CustomEmotes } from "../../../utils/customEmotes";
 import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
 
 let timeMap = new Map<string, number>();
-
 
 export default {
 	dmPermission: false,
@@ -13,7 +13,11 @@ export default {
 	guilds: ["780715935593005088"],
 
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-		await interaction.deferReply({ ephemeral: false });
+		if (interaction.deferred || interaction.replied) {
+			interaction.editReply({ content: `${CustomEmotes.loading} ${interaction.client.user.username} réfléchit...` });
+		} else {
+			await interaction.deferReply({ ephemeral: false });
+		}
 		const userId = interaction.user.id;
 		let userDatabaseProfile = await UserModel.findOne({ id: userId });
 		if (!userDatabaseProfile) {

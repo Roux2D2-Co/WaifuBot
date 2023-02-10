@@ -1,4 +1,5 @@
 import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
+import { CustomEmotes } from "../../../utils/customEmotes";
 
 /**
  * Les commandes présentes dans le dossier "Commands" sont automatiquement
@@ -27,6 +28,9 @@ export default {
 	guilds: ["780715935593005088"], //les serveurs où la commande est déployée
 
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
+		if (interaction.deferred || interaction.replied) {
+			interaction.editReply({ content: `${CustomEmotes.loading} ${interaction.client.user.username} réfléchit...` });
+		}
 		await interaction.deferReply({ ephemeral: true });
 		// do something
 

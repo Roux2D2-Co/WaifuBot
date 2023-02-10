@@ -4,6 +4,7 @@ import { ObtentionWay } from "../../../classes/ObtentionWay";
 import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
+import { CustomEmotes } from "../../../utils/customEmotes";
 
 export default {
 	dmPermission: false,
@@ -13,7 +14,11 @@ export default {
 	options: [{ type: ApplicationCommandOptionType.String, name: "name", description: "Le nom de la waifu", required: true }],
 
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-		await interaction.deferReply({ ephemeral: true });
+		if (interaction.deferred || interaction.replied) {
+			interaction.editReply({ content: `${CustomEmotes.loading} ${interaction.client.user.username} réfléchit...` });
+		} else {
+			await interaction.deferReply({ ephemeral: true });
+		}
 		const userId = interaction.user.id;
 		let userDatabaseProfile = await UserModel.findOne({ id: userId });
 		if (!userDatabaseProfile) {

@@ -18,7 +18,7 @@ export default {
 		let userDatabaseProfile = await UserModel.findOne({ id: userId });
 		if (!userDatabaseProfile) {
 			//TODO : Gérer le cas où le mec a pas de profil
-			await interaction.editReply("Fuck j'ai pas géré le cas où le mec a pas de profil");
+			await interaction.reply({ content: "Vous n'avez pas de profil", ephemeral: true });
 		} else if (userDatabaseProfile.nextRoll > new Date()) {
 			await interaction.reply({
 				content: `Next roll availability : <t:${Math.round(userDatabaseProfile.nextRoll.getTime() / 1000)}:R>`,
@@ -26,12 +26,13 @@ export default {
 			});
 			return;
 		} else {
+			await interaction.deferReply({ ephemeral: false });
 			const waifu = await Anilist.getRandomCharacter(userDatabaseProfile.waifus.map((w) => w.id));
 			userDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(waifu, ObtentionWay.roll));
 			userDatabaseProfile.nextRoll = new Date(Date.now() + ROLL_COOLDOWN);
-			userDatabaseProfile.save();
+			await userDatabaseProfile.save();
 			const { embeds } = await customEmbeds.rolledWaifu(waifu);
-			interaction.reply({ embeds });
+			interaction.editReply({ embeds });
 		}
 	},
 	type: ApplicationCommandType.ChatInput,

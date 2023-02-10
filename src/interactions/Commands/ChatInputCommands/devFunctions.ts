@@ -26,6 +26,9 @@ import {
 	UserResolvable,
 	APIChatInputApplicationCommandInteractionData,
 	APIApplicationCommandInteractionWrapper,
+	ChannelResolvable,
+	User,
+	GuildMember,
 } from "discord.js";
 import { client } from "../../../index";
 import { readdirSync, writeFileSync } from "fs";
@@ -348,26 +351,37 @@ async function getNewInteraction(interaction: ChatInputCommandInteraction, comma
 		avatar: targetMember?.avatar,
 	};
 
-	const resolved: { members: { [key: string]: GuildMemberResolvable }; users: { [key: string]: UserResolvable } } = { members: {}, users: {} };
+	const resolved: {
+		members: { [key: string]: GuildMemberResolvable };
+		users: { [key: string]: UserResolvable };
+		channels: { [key: string]: ChannelResolvable };
+	} = { members: {}, users: {}, channels: {} };
 
-	const formattedOptions = options.map((o) => {
-		if (o.type === ApplicationCommandOptionType.User || o.type === ApplicationCommandOptionType.Mentionable) {
-			client.users.fetch(o.value).then((u) => {
-				resolved.users[u.id] = u;
+	const formattedOptions = await Promise.all(
+		options.map(async (o) => {
+			const option: { name: string; type: ApplicationCommandOptionType; value: string; user?: User; member?: GuildMember } = {
+				name: o.name,
+				type: o.type,
+				value: o.value,
+			};
 
-				interaction.guild?.members.fetch(u.id).then((m) => {
-					if (m) resolved.members[u.id] = m;
-					else throw new Error("Member not found");
-				});
-			});
-		}
+			if (o.type === ApplicationCommandOptionType.User) {
+				const user = await client.users.fetch(o.value);
+				resolved.users[o.value] = user;
+				const member = await interaction.guild?.members.fetch(o.value);
+				if (!!member) resolved.members[o.value] = member;
 
-		return {
-			name: o.name,
-			type: o.type,
-			value: o.value,
-		};
-	});
+				option.user = user;
+				option.member = member;
+			} else if (o.type === ApplicationCommandOptionType.Channel) {
+				const channel = await client.channels.fetch(o.value);
+				if (!!channel) resolved.channels[o.value] = channel;
+			}
+
+			console.log(option);
+			return option;
+		})
+	);
 
 	const subCommandGroup = localCommand.options?.find((o) => o.name === commandNames.subCommandGroup) as ApplicationCommandSubGroupData;
 	const subCommand = (subCommandGroup || localCommand)?.options?.find(
