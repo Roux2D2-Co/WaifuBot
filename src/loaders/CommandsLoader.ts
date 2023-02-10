@@ -51,7 +51,7 @@ export class Loader {
 		for await (const guildId of guildsCommands.keys()) {
 			let guild: Guild;
 			try {
-				guild = await client.guilds.fetch(guildId);
+				guild = await client.guilds.fetch({ force: true, guild: guildId });
 			} catch (err) {
 				continue;
 			}

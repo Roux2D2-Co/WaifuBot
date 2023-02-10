@@ -9,6 +9,7 @@ import {
 } from "discord.js";
 import customEmbeds from "../../../utils/customEmbeds";
 import { UserModel, User } from "../../../database/models/user";
+import { CustomEmotes } from "../../../utils/customEmotes";
 
 export default {
 	dmPermission: false,
@@ -104,7 +105,11 @@ export default {
 	],
 
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-		await interaction.deferReply({ ephemeral: false });
+		if (interaction.deferred || interaction.replied) {
+			interaction.editReply({ content: `${CustomEmotes.loading} ${interaction.client.user.username} réfléchit...` });
+		} else {
+			await interaction.deferReply({ ephemeral: false });
+		}
 		let subcommandGroup = interaction.options.getSubcommandGroup(false);
 		let subCommand = interaction.options.getSubcommand(true);
 		let choosenSubcommand: ApplicationCommandSubCommandData | undefined;
@@ -128,9 +133,11 @@ export default {
 			let waifus = userProfile.waifus;
 			let input = focusedOption.value.toLowerCase();
 			let filteredWaifus = waifus.filter((waifu) => waifu.name.toLowerCase().includes(input));
-			let waifuOptions = filteredWaifus.map((waifu) => {
-				return { name: waifu.name, value: waifu.id.toString() };
-			}).splice(0, 25);
+			let waifuOptions = filteredWaifus
+				.map((waifu) => {
+					return { name: waifu.name, value: waifu.id.toString() };
+				})
+				.splice(0, 25);
 			return interaction.respond(waifuOptions);
 		}
 	},
