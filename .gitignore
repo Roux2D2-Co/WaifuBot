@@ -4,4 +4,5 @@ guildBackups/
 /test*
 assets/images/**
 !assets/images/.gitkeep
+!assets/images/shiny.gif
 .env
