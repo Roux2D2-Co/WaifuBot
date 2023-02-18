@@ -14,7 +14,7 @@ export async function convertImageToShiny(waifuId: number) {
 async function main(imagePath: string, outputPath: string): Promise<void> {
 	const gif = await GifUtil.read(gifPath);
 	const image = await Jimp.read(imagePath);
-	const fittedImage = transformImage(image);
+	const fittedImage = resizeToFit(image);
 	const frames = await Promise.all(
 		gif.frames.map(async (frame) => {
 			const mergedFrame = await mergeImages(frame, fittedImage);
@@ -30,12 +30,15 @@ async function main(imagePath: string, outputPath: string): Promise<void> {
 }
 
 const mergeImages = async (frame: BitmapImage, overlayImage: Jimp) => {
-	const frameImage = new Jimp(frame.bitmap.width, frame.bitmap.height);
+	const frameImage = new Jimp(STANDARD_DIMENSIONS.width, STANDARD_DIMENSIONS.height);
 	frameImage.bitmap.data = frame.bitmap.data;
+	const maskImage = frameImage.clone();
+	const backgroundImage = overlayImage.clone();
+	maskImage.mask(backgroundImage.clone(), 0, 0);
 
-	const mergedImage = await frameImage.composite(overlayImage, 0, 0, {
-		mode: Jimp.BLEND_SCREEN,
-		opacityDest: 0.8,
+	const mergedImage = await backgroundImage.composite(maskImage, 0, 0, {
+		mode: Jimp.BLEND_DESTINATION_OVER,
+		opacityDest: 0.63,
 		opacitySource: 1,
 	});
 
@@ -44,13 +47,16 @@ const mergeImages = async (frame: BitmapImage, overlayImage: Jimp) => {
 	return new GifFrame(mergedFrame);
 };
 
-const transformImage = (image: Jimp): Jimp => {
-	//transform image to fit gif dimensions
-	const newImage = new Jimp(STANDARD_DIMENSIONS.width, STANDARD_DIMENSIONS.height);
-
-	//add image to new image centered vertically
-	const x = (STANDARD_DIMENSIONS.width - image.bitmap.width) / 2;
-	const y = (STANDARD_DIMENSIONS.height - image.bitmap.height) / 2;
-	newImage.composite(image, x, y);
-	return newImage;
+const resizeToFit = (image: Jimp): Jimp => {
+	if (image.getHeight() != STANDARD_DIMENSIONS.height || image.getWidth() != STANDARD_DIMENSIONS.width) {
+		//transform image to fit gif dimensions
+		const newImage = new Jimp(STANDARD_DIMENSIONS.width, STANDARD_DIMENSIONS.height);
+		//add image to new image centered vertically
+		const x = (STANDARD_DIMENSIONS.width - image.bitmap.width) / 2;
+		const y = (STANDARD_DIMENSIONS.height - image.bitmap.height) / 2;
+		newImage.composite(image, x, y);
+		return newImage;
+	} else {
+		return image;
+	}
 };
