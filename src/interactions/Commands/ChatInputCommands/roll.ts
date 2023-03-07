@@ -4,8 +4,7 @@ import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
 
-const ROLL_COOLDOWN = 4 * 60 * 60 * 1000; // 4 hours
-// const ROLL_COOLDOWN = 60 * 1000; // 1 min
+import config from "../../../config.json";
 
 export default {
 	dmPermission: false,
@@ -28,7 +27,7 @@ export default {
 		} else {
 			const waifu = await Anilist.getRandomCharacter(userDatabaseProfile.waifus.map((w) => w.id));
 			userDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(waifu, ObtentionWay.roll));
-			userDatabaseProfile.nextRoll = new Date(Date.now() + ROLL_COOLDOWN);
+			userDatabaseProfile.nextRoll = new Date(Date.now() + config.ROLL_COOLDOWN);
 			userDatabaseProfile.save();
 			const { embeds } = await customEmbeds.rolledWaifu(waifu);
 			interaction.reply({ embeds });
