@@ -45,10 +45,10 @@ export default {
 		});
 
 		const actionRow = new ActionRowBuilder<ButtonBuilder>();
-		const lockButton = CustomButton.build(lockDrop);
-		const ownCheckButton = CustomButton.build(characterOwnCheck);
+		const lockButton = lockDrop.build();
+		const ownCheckButton = characterOwnCheck.build();
 		ownCheckButton.setCustomId(`${characterOwnCheck.customId}-${waifu.id}`);
-		
+
 		actionRow.addComponents(lockButton, ownCheckButton);
 
 		const waifuEmbed = new EmbedBuilder()

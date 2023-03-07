@@ -18,14 +18,14 @@ export default class CustomButton implements InteractionButtonComponentData {
 	regexValidator?: RegExp | undefined;
 
 	execute: (interaction: ButtonInteraction<CacheType>, ...args: any[]) => Promise<void | any>;
-	static build(button: CustomButton): ButtonBuilder {
+	build = () => {
 		return new ButtonBuilder()
-			.setCustomId(button.customId)
-			.setStyle(button.style)
-			.setLabel(button.label!)
-			.setDisabled(button.disabled)
-			.setEmoji(button.emoji!);
-	}
+			.setCustomId(this.customId)
+			.setStyle(this.style)
+			.setLabel(this.label!)
+			.setDisabled(this.disabled)
+			.setEmoji(this.emoji!);
+	};
 
 	constructor(data: InteractionButtonComponentData) {
 		this.style = data.style;
