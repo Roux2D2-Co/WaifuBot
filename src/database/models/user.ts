@@ -8,6 +8,7 @@ export interface User {
 	favorite?: Waifu;
 	deleteDate?: Date;
 	nextRoll: Date;
+	tokens: number;
 }
 
 export const UserSchema = new mongoose.Schema({
@@ -27,6 +28,7 @@ export const UserSchema = new mongoose.Schema({
 		require: false,
 	},
 	deleteDate: { type: Date, require: false },
+	tokens: { type: Number, require: true, default: 0 },
 });
 
 UserSchema.pre("validate", { document: true }, function (next) {
