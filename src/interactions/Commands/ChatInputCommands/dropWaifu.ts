@@ -4,12 +4,12 @@ import {
 	ChatInputCommandInteraction,
 	ChannelType,
 	GuildResolvable,
-	DateResolvable,
 	time,
 } from "discord.js";
 import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
+import config from "../../../config.json";
 
 let timeMap = new Map<GuildResolvable, Date>();
 
@@ -39,7 +39,7 @@ export default {
 				if (!c || c.type != ChannelType.GuildText) return;
 				c.send({ embeds, files, components }).then((m) => (interaction.guild!.waifuMessage = m));
 				console.log(randomWaifu.name);
-				timeMap.set(interaction.guild!.id, new Date(Date.now() + 30000));
+				timeMap.set(interaction.guild!.id, new Date(Date.now() + config.DROP_COOLDOWN));
 			});
 		}
 	},
