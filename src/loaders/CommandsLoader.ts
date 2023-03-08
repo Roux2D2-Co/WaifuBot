@@ -43,7 +43,7 @@ export class Loader {
 						globalCommands.push(command);
 					}
 				} else {
-					console.error(`${command.name} n'a pas été chargé car aucun type n'est spécifié`);
+					console.error(`${command.name} isn't loaded as no type were specified`);
 				}
 			});
 		}

@@ -1,4 +1,4 @@
-import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder } from "discord.js";
+import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, time } from "discord.js";
 import { ObtentionWay } from "../../../classes/ObtentionWay";
 import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
@@ -17,23 +17,23 @@ export default {
 		let userDatabaseProfile = await UserModel.findOne({ id: userId });
 		if (!userDatabaseProfile) {
 			//TODO : Gérer le cas où le mec a pas de profil
-			await interaction.editReply("Fuck j'ai pas géré le cas où le mec a pas de profil");
+			await interaction.editReply("You don't have any profile");
 		} else if (userDatabaseProfile.nextRoll > new Date()) {
 			if (userDatabaseProfile.tokens >= config.TOKENS_PER_ROLL) {
 				let actionRow = new ActionRowBuilder<ButtonBuilder>();
 				let roll1 = rollWithTokensButton.build();
-				roll1.setCustomId(`${rollWithTokensButton.customId}-${userId}-1`).setLabel("Roll 1 fois");
+				roll1.setCustomId(`${rollWithTokensButton.customId}-${userId}-1`).setLabel("Roll 1 time");
 				actionRow.addComponents([roll1]);
 
 				let roll5 = rollWithTokensButton.build();
-				roll5.setCustomId(`${rollWithTokensButton.customId}-${userId}-5`).setLabel("Roll 5 fois");
+				roll5.setCustomId(`${rollWithTokensButton.customId}-${userId}-5`).setLabel("Roll 5 times");
 				if (userDatabaseProfile.tokens < config.TOKENS_PER_ROLL * 5) {
 					roll5.setDisabled(true);
 				}
 				actionRow.addComponents([roll5]);
 
 				let roll10 = rollWithTokensButton.build();
-				roll10.setCustomId(`${rollWithTokensButton.customId}-${userId}-10`).setLabel("Roll 10 fois");
+				roll10.setCustomId(`${rollWithTokensButton.customId}-${userId}-10`).setLabel("Roll 10 times");
 				if (userDatabaseProfile.tokens < config.TOKENS_PER_ROLL * 10) {
 					roll10.setDisabled(true);
 					let rollMax = rollWithTokensButton.build();
@@ -45,13 +45,13 @@ export default {
 				}
 
 				await interaction.reply({
-					content: `Vous avez assez de tokens pour roll !`,
+					content: `You can roll by spending tokens !\nNext free roll in ${time(new Date(userDatabaseProfile.nextRoll), "R")}}`,
 					components: [actionRow],
 					ephemeral: true,
 				});
 			} else {
 				await interaction.reply({
-					content: `Next roll availability : <t:${Math.round(userDatabaseProfile.nextRoll.getTime() / 1000)}:R>`,
+					content: `Next free roll : <t:${Math.round(userDatabaseProfile.nextRoll.getTime() / 1000)}:R>`,
 					ephemeral: true,
 				});
 			}

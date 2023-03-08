@@ -16,7 +16,7 @@ let guildDropCooldowns = new Map<GuildResolvable, Date>();
 export { guildDropCooldowns };
 export default {
 	dmPermission: false,
-	description: "Fait apparaitre une waifu",
+	description: "Summon a waifu",
 	name: "drop",
 	guilds: ["780715935593005088"],
 
@@ -25,11 +25,11 @@ export default {
 		const userId = interaction.user.id;
 		let userDatabaseProfile = await UserModel.findOne({ id: userId });
 		if (!userDatabaseProfile) {
-			//TODO : Gérer le cas où le mec a pas de profil
-			await interaction.editReply("Fuck j'ai pas géré le cas où le mec a pas de profil");
+			//TODO : Handle user not in database
+			await interaction.editReply("You don't have any profile");
 		} else {
 			if (guildDropCooldowns.get(interaction.guild!.id) && guildDropCooldowns.get(interaction.guild!.id)! > new Date()) {
-				await interaction.editReply(`La prochaine waifu pourra drop ${time(new Date(guildDropCooldowns.get(interaction.guild!.id)!), "R")}`);
+				await interaction.editReply(`Next waifu can drop ${time(new Date(guildDropCooldowns.get(interaction.guild!.id)!), "R")}`);
 				return;
 			}
 			const randomWaifu = await Anilist.getRandomCharacter();

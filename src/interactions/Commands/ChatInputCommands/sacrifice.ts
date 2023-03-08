@@ -10,13 +10,13 @@ import config from "../../../config.json";
 
 export default {
 	dmPermission: false,
-	description: "Sacrifier une waifu en échange d'un token",
+	description: "Sacrifice a waifu for a token",
 	name: "sacrifice",
 	guilds: ["780715935593005088"],
 	options: [
 		{
 			type: ApplicationCommandOptionType.String,
-			description: "Le personnage à sacrifier",
+			description: "Waifu to sacrifice",
 			name: "character",
 			autocomplete: true,
 			required: true,
@@ -27,14 +27,14 @@ export default {
 		let user = interaction.user;
 		let userProfile = await UserModel.findOne({ id: user.id });
 		if (!userProfile || userProfile.waifus.length === 0) {
-			await interaction.editReply("Vous n'avez pas de waifu.");
+			await interaction.editReply("You don't have any waifu to sacrifice");
 			return;
 		} else {
 			let waifuId = interaction.options.getString("character", true);
       let waifu = userProfile.waifus.find((w) => w.id.toString() === waifuId);
 
 			await UserModel.findOneAndUpdate({ id: user.id }, { $pull: { waifus: { id: parseInt(waifuId) } }, $inc: { tokens: config.TOKEN_PER_SACRIFICE } });
-			await interaction.editReply(`Vous avez sacrifié ${waifu!.name} pour ${config.TOKEN_PER_SACRIFICE} token${config.TOKEN_PER_SACRIFICE > 1 ? "s" : ""}`);
+			await interaction.editReply(`You rolled ${waifu!.name} for ${config.TOKEN_PER_SACRIFICE} token${config.TOKEN_PER_SACRIFICE > 1 ? "s" : ""}`);
 		}
 	},
 

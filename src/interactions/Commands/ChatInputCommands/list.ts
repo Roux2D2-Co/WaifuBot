@@ -6,19 +6,19 @@ import { returnDominantColor } from "../../../utils/utils";
 
 export default {
     dmPermission: false,
-    description: "Lister l'ensemble de vos personnages acquis",
+    description: "List your waifus",
     name: "list",
     guilds: ["780715935593005088"],
     options: [
         {
             name: "user",
-            description: "L'utilisateur dont vous voulez voir la liste de waifus",
+            description: "User whose waifus you want to see",
             type: ApplicationCommandOptionType.User,
             required: false
         },
         {
             name: "series",
-            description: "La série dont vous voulez voir la liste de waifus",
+            description: "Anime/Manga series you want to see the waifus from",
             type: ApplicationCommandOptionType.String,
             required: false
         }
@@ -33,11 +33,12 @@ export default {
         }
         let userDatabaseProfile = await UserModel.findOne({ id: user.id });
         if (!userDatabaseProfile) {
-            await interaction.editReply("Impossible vous n'avez pas d'identifiant !!");
+            //TODO : Handle user not in database
+            await interaction.editReply("You don't have any profile");
             return;
         }
         else if (userDatabaseProfile!.waifus.length === 0) {
-            await interaction.editReply("Vous n'avez pas encore de waifu.");
+            await interaction.editReply("You don't have any waifu yet.");
             return;
         }
         else {
@@ -64,13 +65,13 @@ export default {
                 if (waifusInSeries.length !== 0) {
                     waifuTab = waifusInSeries;
                 } else {
-                    await interaction.editReply({ content: "Aucune waifu n'a été trouvée dans cette série." });
+                    await interaction.editReply({ content: "No waifu found with this series input" });
                     return;
                 }
             }
             // Case when player has waifus to display
             let str: String;
-            str = "Voici la liste de vos waifus : \n";
+            str = "Here is a list of your waifus : \n";
             let wai: Waifu;
             wai = waifuTab[0] as Waifu;
             str += wai.name + "\n";
