@@ -16,7 +16,7 @@ export default {
 	options: [
 		{
 			type: ApplicationCommandOptionType.String,
-			description: "Votre nouvelle personnage favori",
+			description: "Le personnage à sacrifier",
 			name: "character",
 			autocomplete: true,
 			required: true,
