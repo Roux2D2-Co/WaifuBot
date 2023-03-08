@@ -4,7 +4,7 @@ import { ObtentionWay } from "../../../classes/ObtentionWay";
 import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
-import { timeMap } from "./dropWaifu";
+import { guildDropCooldowns } from "./dropWaifu";
 
 export default {
 	dmPermission: false,
@@ -39,7 +39,7 @@ export default {
 
 				userDatabaseProfile.save();
 				interaction.guild!.waifu = null;
-				timeMap.delete(interaction.guild!.id);
+				guildDropCooldowns.delete(interaction.guild!.id);
 				await interaction.editReply("https://tenor.com/view/yes-gif-23999135");
 				const { embeds } = customEmbeds.claimedWaifu(waifu, interaction.user.id);
 				interaction.guild!.waifuMessage.edit({ embeds }).then(() => {
