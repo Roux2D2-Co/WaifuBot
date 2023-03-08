@@ -8,22 +8,22 @@ import { guildDropCooldowns } from "./dropWaifu";
 
 export default {
 	dmPermission: false,
-	description: "Claim une waifu",
+	description: "Claim a waifu",
 	name: "claim",
 	guilds: ["780715935593005088"],
-	options: [{ type: ApplicationCommandOptionType.String, name: "name", description: "Le nom de la waifu", required: true }],
+	options: [{ type: ApplicationCommandOptionType.String, name: "name", description: "Waifu name", required: true }],
 
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
 		await interaction.deferReply({ ephemeral: true });
 		const userId = interaction.user.id;
 		let userDatabaseProfile = await UserModel.findOne({ id: userId });
 		if (!userDatabaseProfile) {
-			//TODO : Gérer le cas où le mec a pas de profil
-			await interaction.editReply("Fuck j'ai pas géré le cas où le mec a pas de profil");
+			//TODO : Handle user not in database
+			await interaction.editReply("You don't have any profile");
 		} else {
 			const waifu = interaction.guild!.waifu;
 			if(!waifu) {
-				await interaction.editReply("Il n'y a pas de waifu à claim");
+				await interaction.editReply("There is no waifu to claim");
 				return;
 			}
 			const waifuNames = [waifu.name.full, waifu.name.userPreferred, ...waifu.name.alternative, ...waifu.name.alternativeSpoiler].map((n) =>
