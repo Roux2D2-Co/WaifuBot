@@ -4,16 +4,16 @@ import {
 	ChatInputCommandInteraction,
 	ChannelType,
 	GuildResolvable,
-	DateResolvable,
 	time,
 } from "discord.js";
 import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
+import config from "../../../config.json";
 
-let timeMap = new Map<GuildResolvable, Date>();
+let guildDropCooldowns = new Map<GuildResolvable, Date>();
 
-export { timeMap };
+export { guildDropCooldowns };
 export default {
 	dmPermission: false,
 	description: "Fait apparaitre une waifu",
@@ -28,8 +28,8 @@ export default {
 			//TODO : Gérer le cas où le mec a pas de profil
 			await interaction.editReply("Fuck j'ai pas géré le cas où le mec a pas de profil");
 		} else {
-			if (timeMap.get(interaction.guild!.id) && timeMap.get(interaction.guild!.id)! > new Date()) {
-				await interaction.editReply(`La prochaine waifu pourra drop ${time(new Date(timeMap.get(interaction.guild!.id)!), "R")}`);
+			if (guildDropCooldowns.get(interaction.guild!.id) && guildDropCooldowns.get(interaction.guild!.id)! > new Date()) {
+				await interaction.editReply(`La prochaine waifu pourra drop ${time(new Date(guildDropCooldowns.get(interaction.guild!.id)!), "R")}`);
 				return;
 			}
 			const randomWaifu = await Anilist.getRandomCharacter();
@@ -39,7 +39,7 @@ export default {
 				if (!c || c.type != ChannelType.GuildText) return;
 				c.send({ embeds, files, components }).then((m) => (interaction.guild!.waifuMessage = m));
 				console.log(randomWaifu.name);
-				timeMap.set(interaction.guild!.id, new Date(Date.now() + 30000));
+				guildDropCooldowns.set(interaction.guild!.id, new Date(Date.now() + config.DROP_COOLDOWN));
 			});
 		}
 	},

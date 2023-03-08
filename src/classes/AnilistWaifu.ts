@@ -13,11 +13,11 @@ export interface AnilistWaifu {
 	};
 	gender: string;
 	media: {
-		nodes: {
+		nodes: Array<{
 			title: {
 				romaji: string;
 			};
 			isAdult: boolean;
-		};
+		}>;
 	};
 }

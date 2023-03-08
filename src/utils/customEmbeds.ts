@@ -6,7 +6,6 @@ import { rgbToHex } from "./utils";
 import { User as DatabaseUser } from "../database/models/user";
 import lockDrop from "../interactions/Components/Buttons/lockDrop";
 import characterOwnCheck from "../interactions/Components/Buttons/characterOwnCheck";
-import CustomButton from "../classes/CustomButton";
 
 function getObfuscatedWaifuName(words: string): string {
 	let letters: string[] = [];
@@ -45,10 +44,10 @@ export default {
 		});
 
 		const actionRow = new ActionRowBuilder<ButtonBuilder>();
-		const lockButton = CustomButton.build(lockDrop);
-		const ownCheckButton = CustomButton.build(characterOwnCheck);
+		const lockButton = lockDrop.build();
+		const ownCheckButton = characterOwnCheck.build();
 		ownCheckButton.setCustomId(`${characterOwnCheck.customId}-${waifu.id}`);
-		
+
 		actionRow.addComponents(lockButton, ownCheckButton);
 
 		const waifuEmbed = new EmbedBuilder()
@@ -67,7 +66,8 @@ export default {
 	rolledWaifu: (waifu: AnilistWaifu): { embeds: EmbedBuilder[] } => {
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle(waifu.name.full)
-			.setDescription(`Congratulations!\nYou just claimed ${waifu.name.full} (${waifu.id})!`)
+			.setURL(`https://anilist.co/character/${waifu.id}`)
+			.setDescription(`You rolled ${waifu.name.full} (${waifu.id})!\n\n*(${waifu.media.nodes[0].title.romaji} ${waifu.media.nodes[0].isAdult ? "🔞" : ""})*`)
 			.setThumbnail(waifu.image.large);
 		return { embeds: [waifuEmbed] };
 	},
@@ -76,7 +76,8 @@ export default {
 		const loli = isNaN(parseInt(waifu.age)) ? false : parseInt(waifu.age) < 16 ? true : false;
 
 		const waifuEmbed = new EmbedBuilder()
-			.setTitle("Waifu Claimed !")
+			.setTitle(waifu.name.full)
+			.setURL(`https://anilist.co/character/${waifu.id}`)
 			.setDescription(
 				`
 			<@${userId}> claimed **[${waifu.name.full}](https://anilist.co/character/${waifu.id})** !!
@@ -86,7 +87,9 @@ export default {
 					waifu.name.alternativeSpoiler.length > 0
 						? `Alternatives Spoiler :\n${waifu.name.alternativeSpoiler.map((t) => `\u200b\t- ||${t}||`).join("\n")}`
 						: ""
-				}`
+				}
+				
+				*(${waifu.media.nodes[0].title.romaji} ${waifu.media.nodes[0].isAdult ? "🔞" : ""})*`
 			)
 			.setImage("attachment://nope.png")
 			.setColor(loli ? Colors.Red : Colors.Green);
@@ -152,6 +155,8 @@ export default {
 				}
 				They have ${userProfile.waifus.length} characters.
 				${userProfile?.favorite ? `Their favorite character is ${userProfile.favorite.name}` : ""}
+
+				They have ${userProfile.tokens} token${userProfile.tokens > 1 ? "s" : ""}.
 				`
 			)
 			.setThumbnail(userProfile?.favorite?.image ?? null);
