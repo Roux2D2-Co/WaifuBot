@@ -22,6 +22,7 @@ export default {
             type: ApplicationCommandOptionType.String,
             required: false
         }
+        //TODO add sort option with a dropdown menu
     ],
 
     async execute(interaction: ChatInputCommandInteraction): Promise<void> {
