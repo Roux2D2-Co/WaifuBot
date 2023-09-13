@@ -29,6 +29,8 @@ import {
 	ChannelResolvable,
 	User,
 	GuildMember,
+	Collection,
+	ApplicationCommand,
 } from "discord.js";
 import { client } from "../../../index";
 import { readdirSync, writeFileSync } from "fs";
@@ -88,11 +90,13 @@ export default {
 					| ApplicationCommandSubGroupData
 					| undefined;
 				if (subCommandGroup) {
-					subCommandGroupData = localCommand.options?.find((option) => option.name === subCommandGroup) as ApplicationCommandSubGroupData;
+					subCommandGroupData = localCommand.options?.find(
+						(option: { name: string | undefined }) => option.name === subCommandGroup
+					) as ApplicationCommandSubGroupData;
 					if (!subCommandGroupData) return interaction.editReply("Cette commande n'existe pas");
 				}
 				subCommandData = (subCommandGroupData || localCommand).options?.find(
-					(option) => option.name === subCommand
+					(option: { name: string | undefined }) => option.name === subCommand
 				) as ApplicationCommandSubCommandData;
 				if (!!subCommandData && subCommandData.execute) {
 					executableCommand = subCommandData;
@@ -126,7 +130,7 @@ export default {
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
 		await interaction.deferReply({ ephemeral: true });
 		let subCommand = interaction.options.getSubcommand(true);
-		let choosenSubcommand = this.options!.find((option) => option.name === subCommand) as ApplicationCommandSubCommandData;
+		let choosenSubcommand = this.options!.find((option: { name: any }) => option.name === subCommand) as ApplicationCommandSubCommandData;
 		!!choosenSubcommand && !!choosenSubcommand.execute && choosenSubcommand.execute(interaction);
 	},
 
@@ -137,20 +141,20 @@ export default {
 		if (!commands) return interaction.respond([]);
 		else {
 			let commandNames = commands
-				.map((command) => {
+				.map((command: { name: string }) => {
 					if (command.name === this.name || !localCommands.has(command.name)) return { name: "", value: "" };
 					let localCommand = (localCommands.get(command.name) as ChatInputApplicationCommandData) ?? null;
 					const commandName = `/${localCommand.name}`;
 					let possibilites: { name: string; value: string }[] = [];
 					let subcommandGroups = localCommand.options?.filter(
-						(option) => option.type === ApplicationCommandOptionType.SubcommandGroup
+						(option: { type: any }) => option.type === ApplicationCommandOptionType.SubcommandGroup
 					) as ApplicationCommandSubGroupData[];
 					let firstLevelSubcommands = localCommand.options?.filter(
-						(option) => option.type === ApplicationCommandOptionType.Subcommand
+						(option: { type: any }) => option.type === ApplicationCommandOptionType.Subcommand
 					) as ApplicationCommandSubCommandData[];
 					for (const subCommandGroup of subcommandGroups ?? []) {
 						let secondLevelsCommands = subCommandGroup.options?.filter(
-							(option) => option.type === ApplicationCommandOptionType.Subcommand
+							(option: { type: any }) => option.type === ApplicationCommandOptionType.Subcommand
 						);
 						for (const secondLevelCommand of secondLevelsCommands ?? []) {
 							possibilites.push({
@@ -173,7 +177,7 @@ export default {
 					return possibilites;
 				})
 				.flat()
-				.filter((command) => !!command.name && (!value || command.name.includes(value)));
+				.filter((command: { name: string | any[] }) => !!command.name && (!value || command.name.includes(value)));
 			await interaction.respond(commandNames);
 		}
 	},
@@ -185,7 +189,7 @@ type OptionAndValue = ApplicationCommandOptionData & { value: any };
 
 async function collectVariables(
 	interaction: ChatInputCommandInteraction,
-	options: ApplicationCommandOptionData[] | undefined
+	options: ApplicationCommandOptionData[] | readonly ApplicationCommandOptionData[] | undefined
 ): Promise<Map<string, OptionAndValue>> {
 	const collectorFilter = (i: MessageComponentInteraction) => i.user.id === interaction.user.id;
 	const valuesMap = new Map<string, OptionAndValue>();
@@ -261,7 +265,7 @@ async function collectVariables(
 
 		await new Promise<void>((resolve, reject) => {
 			const collector = message.createMessageComponentCollector({ filter: collectorFilter ?? (() => true), time: 300000 });
-			collector.on("end", (c, reason) => {
+			collector.on("end", (c: any, reason: string) => {
 				if (reason == "time") {
 					interaction.editReply({ content: "5 minutes se sont écoulés\nAnnulation de la demande", components: [] }).catch(() => {
 						console.error("Error at message.edit in collectVariables\nIt seems that the message is unavailable and/or ephemeral");
@@ -271,47 +275,69 @@ async function collectVariables(
 					interaction.editReply({ components: [] });
 				}
 			});
-			collector.on("collect", (i) => {
-				if (i.customId === "validate") {
-					i.deferUpdate();
-					collector.stop();
-					resolve();
-				} else {
-					if (i.isAnySelectMenu() && i.values.length === 1) {
-						let responseComponents = [...components];
-						responseComponents[responseComponents.length - 1].components[0].setDisabled(false).setStyle(ButtonStyle.Success);
-						option.value = i.values[0];
-						valuesMap.set(option.name, option);
-						i.update({ components: responseComponents });
-					} else if (i.isButton()) {
-						//si c'est un bouton ça veut dire qu'on cherche à obtenir un string/number/integer donc on a besoin d'un modal
-						const modalComponents = new ActionRowBuilder<TextInputBuilder>().addComponents(
-							new TextInputBuilder()
-								.setCustomId(option.name)
-								.setLabel(option.name)
-								.setPlaceholder(option.name)
-								.setRequired(true)
-								.setStyle(TextInputStyle.Short)
-						);
-						const modal = new ModalBuilder().setCustomId(option.name).setTitle(option.name).setComponents(modalComponents);
-						i.showModal(modal);
-						const filter = (subI: ModalSubmitInteraction) => subI.customId === modal.data.custom_id;
-						interaction.awaitModalSubmit({ filter, time: 30_000 }).then((subI) => {
-							option.value = subI.fields.getTextInputValue(option.name);
-							valuesMap.set(option.name, option);
+			collector.on(
+				"collect",
+				(i: {
+					customId: string;
+					deferUpdate: () => void;
+					isAnySelectMenu: () => any;
+					values: string | any[];
+					update: (arg0: { components: any[] }) => void;
+					isButton: () => any;
+					showModal: (arg0: any) => void;
+					editReply: (arg0: { content: string; components: any[] }) => void;
+				}) => {
+					if (i.customId === "validate") {
+						i.deferUpdate();
+						collector.stop();
+						resolve();
+					} else {
+						if (i.isAnySelectMenu() && i.values.length === 1) {
 							let responseComponents = [...components];
 							responseComponents[responseComponents.length - 1].components[0].setDisabled(false).setStyle(ButtonStyle.Success);
-							i.editReply({
-								content: messageContent + `\nValeur actuelle de l'option ${bold(option.name)} : ${option.value}`,
-								components: responseComponents,
-							});
-							subI.reply({ content: "valeur enregitrés", ephemeral: true }).then(() => {
-								subI.deleteReply();
-							});
-						});
+							option.value = i.values[0];
+							valuesMap.set(option.name, option);
+							i.update({ components: responseComponents });
+						} else if (i.isButton()) {
+							//si c'est un bouton ça veut dire qu'on cherche à obtenir un string/number/integer donc on a besoin d'un modal
+							const modalComponents = new ActionRowBuilder<TextInputBuilder>().addComponents(
+								new TextInputBuilder()
+									.setCustomId(option.name)
+									.setLabel(option.name)
+									.setPlaceholder(option.name)
+									.setRequired(true)
+									.setStyle(TextInputStyle.Short)
+							);
+							const modal = new ModalBuilder().setCustomId(option.name).setTitle(option.name).setComponents(modalComponents);
+							i.showModal(modal);
+							const filter = (subI: ModalSubmitInteraction) => subI.customId === modal.data.custom_id;
+							interaction
+								.awaitModalSubmit({ filter, time: 30_000 })
+								.then(
+									(subI: {
+										fields: { getTextInputValue: (arg0: any) => any };
+										reply: (arg0: { content: string; ephemeral: boolean }) => Promise<any>;
+										deleteReply: () => void;
+									}) => {
+										option.value = subI.fields.getTextInputValue(option.name);
+										valuesMap.set(option.name, option);
+										let responseComponents = [...components];
+										responseComponents[responseComponents.length - 1].components[0]
+											.setDisabled(false)
+											.setStyle(ButtonStyle.Success);
+										i.editReply({
+											content: messageContent + `\nValeur actuelle de l'option ${bold(option.name)} : ${option.value}`,
+											components: responseComponents,
+										});
+										subI.reply({ content: "valeur enregitrés", ephemeral: true }).then(() => {
+											subI.deleteReply();
+										});
+									}
+								);
+						}
 					}
 				}
-			});
+			);
 		});
 	}
 
@@ -322,9 +348,13 @@ async function getNewInteraction(interaction: ChatInputCommandInteraction, comma
 	const localCommand = localCommands.get(commandNames.command)!;
 	let discordCommand;
 	if (!!localCommand.guilds && localCommand.guilds.length > 0) {
-		discordCommand = await interaction.guild?.commands.fetch().then((cList) => cList.find((c) => c.name === commandNames.command));
+		discordCommand = await interaction.guild?.commands
+			.fetch()
+			.then((cList: Collection<string, ApplicationCommand<{}>>) => cList.find((c: { name: string }) => c.name === commandNames.command));
 	} else {
-		discordCommand = await interaction.client.application?.commands.fetch().then((cList) => cList.find((c) => c.name === commandNames.command));
+		discordCommand = await interaction.client.application?.commands
+			.fetch()
+			.then((cList: Collection<string, ApplicationCommand<{}>>) => cList.find((c: { name: string }) => c.name === commandNames.command));
 	}
 
 	const targetUser = interaction.options.getUser("user", true);
@@ -337,7 +367,7 @@ async function getNewInteraction(interaction: ChatInputCommandInteraction, comma
 			discriminator: targetUser.discriminator,
 			avatar: targetUser.avatar,
 		},
-		roles: Array.isArray(targetMember?.roles) ? targetMember?.roles : targetMember?.roles.cache.map((r) => r.id),
+		roles: Array.isArray(targetMember?.roles) ? targetMember?.roles : targetMember?.roles.cache.map((r: { id: any }) => r.id),
 		premium_since: targetMember?.premiumSinceTimestamp,
 		permissions: targetMember?.permissions.bitfield,
 		pending: targetMember?.pending,
@@ -383,9 +413,11 @@ async function getNewInteraction(interaction: ChatInputCommandInteraction, comma
 		})
 	);
 
-	const subCommandGroup = localCommand.options?.find((o) => o.name === commandNames.subCommandGroup) as ApplicationCommandSubGroupData;
+	const subCommandGroup = localCommand.options?.find(
+		(o: { name: string | undefined }) => o.name === commandNames.subCommandGroup
+	) as ApplicationCommandSubGroupData;
 	const subCommand = (subCommandGroup || localCommand)?.options?.find(
-		(o) => o.name === commandNames.subCommand
+		(o: { name: string | undefined }) => o.name === commandNames.subCommand
 	) as ApplicationCommandSubCommandData;
 
 	const commandOptions = [];
