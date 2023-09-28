@@ -1,10 +1,11 @@
 import { readFileSync } from "fs";
-import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser, Embed, bold } from "discord.js";
+import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser, Embed, ActionRowBuilder, ButtonBuilder } from "discord.js";
 import { AnilistWaifu } from "../classes/Anilist";
 import { Waifu } from "../classes/Waifu";
 import { rgbToHex } from "./utils";
 import { User as DatabaseUser } from "../database/models/user";
-
+import lockDrop from "../interactions/Components/Buttons/lockDrop";
+import characterOwnCheck from "../interactions/Components/Buttons/characterOwnCheck";
 
 function getObfuscatedWaifuName(words: string): string {
 	let letters: string[] = [];
@@ -32,13 +33,22 @@ function getObfuscatedWaifuName(words: string): string {
 }
 
 export default {
-	randomWaifu: async (waifu: AnilistWaifu): Promise<{ embeds: EmbedBuilder[]; files: AttachmentBuilder[] }> => {
+	randomWaifu: async (
+		waifu: AnilistWaifu
+	): Promise<{ embeds: EmbedBuilder[]; files: AttachmentBuilder[]; components: ActionRowBuilder<ButtonBuilder>[] }> => {
 		const loli = isNaN(parseInt(waifu.age)) ? false : parseInt(waifu.age) < 16 ? true : false;
 
 		const attachment = new AttachmentBuilder(readFileSync(`./assets/images/${waifu.id}.png`), {
 			name: "nope.png",
 			description: "tah la waifu",
 		});
+
+		const actionRow = new ActionRowBuilder<ButtonBuilder>();
+		const lockButton = lockDrop.build();
+		const ownCheckButton = characterOwnCheck.build();
+		ownCheckButton.setCustomId(`${characterOwnCheck.customId}-${waifu.id}`);
+
+		actionRow.addComponents(lockButton, ownCheckButton);
 
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle("Random Waifu Dropped !")
@@ -50,13 +60,14 @@ export default {
 			)
 			.setImage("attachment://nope.png")
 			.setColor(loli ? Colors.Red : Colors.Gold);
-		return { embeds: [waifuEmbed], files: [attachment] };
+		return { embeds: [waifuEmbed], files: [attachment], components: [actionRow] };
 	},
 
 	rolledWaifu: (waifu: AnilistWaifu): { embeds: EmbedBuilder[] } => {
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle(waifu.name.full)
-			.setDescription(`Congratulations!\nYou just claimed ${waifu.name.full} (${waifu.id})!`)
+			.setURL(`https://anilist.co/character/${waifu.id}`)
+			.setDescription(`You rolled ${waifu.name.full} (${waifu.id})!\n\n*(${waifu.media.nodes[0].title.romaji} ${waifu.media.nodes[0].isAdult ? "🔞" : ""})*`)
 			.setThumbnail(waifu.image.large);
 		return { embeds: [waifuEmbed] };
 	},
@@ -65,16 +76,20 @@ export default {
 		const loli = isNaN(parseInt(waifu.age)) ? false : parseInt(waifu.age) < 16 ? true : false;
 
 		const waifuEmbed = new EmbedBuilder()
-			.setTitle("Waifu Claimed !")
+			.setTitle(waifu.name.full)
+			.setURL(`https://anilist.co/character/${waifu.id}`)
 			.setDescription(
 				`
 			<@${userId}> claimed **[${waifu.name.full}](https://anilist.co/character/${waifu.id})** !!
 				${waifu.name.full != waifu.name.userPreferred ? `Nom courant: ${waifu.name.userPreferred}` : ""}
 				${waifu.name.alternative.length > 0 ? `Alternatives :\n${waifu.name.alternative.map((t) => `\u200b\t- ${t}`).join("\n")}` : ""}
-				${waifu.name.alternativeSpoiler.length > 0
-					? `Alternatives Spoiler :\n${waifu.name.alternativeSpoiler.map((t) => `\u200b\t- ||${t}||`).join("\n")}`
-					: ""
-				}`
+				${
+					waifu.name.alternativeSpoiler.length > 0
+						? `Alternatives Spoiler :\n${waifu.name.alternativeSpoiler.map((t) => `\u200b\t- ||${t}||`).join("\n")}`
+						: ""
+				}
+				
+				*(${waifu.media.nodes[0].title.romaji} ${waifu.media.nodes[0].isAdult ? "🔞" : ""})*`
 			)
 			.setImage("attachment://nope.png")
 			.setColor(loli ? Colors.Red : Colors.Green);
@@ -82,24 +97,46 @@ export default {
 	},
 
 	displayWaifuInlist: (waifu: Waifu, actualIndex: string, MaxIndex: string, username: string, color: Array<number>): { embeds: EmbedBuilder[] } => {
-		const hexColor: ColorResolvable = rgbToHex(color[0], color[1], color[2]) as ColorResolvable
-		const footer = (parseInt(actualIndex) + 1).toString() + "/" + (parseInt(MaxIndex) + 1).toString()
+		const hexColor: ColorResolvable = rgbToHex(color[0], color[1], color[2]) as ColorResolvable;
+		const footer = (parseInt(actualIndex) + 1).toString() + "/" + (parseInt(MaxIndex) + 1).toString();
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle(username + "'s list")
 			.setColor(hexColor)
-			.setDescription(waifu.name + " (" + waifu.id + ") " + "\n\n" + (waifu.media?.title.english == undefined ? (waifu.media?.title.romaji == undefined ? "" : "*" + waifu.media?.title.romaji + "*") : "*" + waifu.media?.title.english + "*"))
+			.setDescription(
+				waifu.name +
+					" (" +
+					waifu.id +
+					") " +
+					"\n\n" +
+					(waifu.media?.title.english == undefined
+						? waifu.media?.title.romaji == undefined
+							? ""
+							: "*" + waifu.media?.title.romaji + "*"
+						: "*" + waifu.media?.title.english + "*")
+			)
 			.setImage(waifu.image)
-			.setFooter({ text: footer })
+			.setFooter({ text: footer });
 		return { embeds: [waifuEmbed] };
 	},
 
 	updateWaifuInlist: (waifu: Waifu, actualIndex: string, color: Array<number>, embed: Embed): { embeds: EmbedBuilder[] } => {
-		const hexColor: ColorResolvable = rgbToHex(color[0], color[1], color[2]) as ColorResolvable
+		const hexColor: ColorResolvable = rgbToHex(color[0], color[1], color[2]) as ColorResolvable;
 		const waifuEmbed = EmbedBuilder.from(embed)
 			.setColor(hexColor)
-			.setDescription(waifu.name + " (" + waifu.id + ") " + "\n\n" + (waifu.media?.title.english == undefined ? (waifu.media?.title.romaji == undefined ? "" : "*" + waifu.media?.title.romaji + "*") : "*" + waifu.media?.title.english + "*"))
+			.setDescription(
+				waifu.name +
+					" (" +
+					waifu.id +
+					") " +
+					"\n\n" +
+					(waifu.media?.title.english == undefined
+						? waifu.media?.title.romaji == undefined
+							? ""
+							: "*" + waifu.media?.title.romaji + "*"
+						: "*" + waifu.media?.title.english + "*")
+			)
 			.setImage(waifu.image)
-			.setFooter({ text: embed.footer!.text.replace(/\d+\//, (parseInt(actualIndex) + 1).toString() + "/") })
+			.setFooter({ text: embed.footer!.text.replace(/\d+\//, (parseInt(actualIndex) + 1).toString() + "/") });
 		return { embeds: [waifuEmbed] };
 	},
 
@@ -109,14 +146,17 @@ export default {
 			.setDescription(
 				`
 				${userProfile.quote}
-				${discordUser.username} ${!!userProfile.nextRoll
-					? userProfile?.nextRoll < new Date()
-						? `is able to roll`
-						: `will be able to roll <t:${Math.round(userProfile.nextRoll?.getTime() / 1000)}:R>`
-					: ""
+				${discordUser.username} ${
+					!!userProfile.nextRoll
+						? userProfile?.nextRoll < new Date()
+							? `is able to roll`
+							: `will be able to roll <t:${Math.round(userProfile.nextRoll?.getTime() / 1000)}:R>`
+						: ""
 				}
 				They have ${userProfile.waifus.length} characters.
 				${userProfile?.favorite ? `Their favorite character is ${userProfile.favorite.name}` : ""}
+
+				They have ${userProfile.tokens} token${userProfile.tokens > 1 ? "s" : ""}.
 				`
 			)
 			.setThumbnail(userProfile?.favorite?.image ?? null);
@@ -154,5 +194,4 @@ export default {
 			.setColor(Colors.Green);
 		return { embeds: [waifuEmbed], files: [attachment] };
 	},
-
 };

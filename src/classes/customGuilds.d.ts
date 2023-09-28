@@ -4,7 +4,7 @@ import { AnilistWaifu } from "./AnilistWaifu";
 declare module "discord.js" {
 	export interface Guild {
 		localCommands: Array<ApplicationCommandData>;
-		waifu: AnilistWaifu;
+		waifu: AnilistWaifu | undefined | null;
 		waifuMessage: Message;
 	}
 }

@@ -14,17 +14,17 @@ import { CustomEmotes } from "../../../utils/customEmotes";
 export default {
 	dmPermission: false,
 	description: "Gérer votre profil",
-	name: "profil",
+	name: "profile",
 	guilds: ["780715935593005088"],
 	options: [
 		{
 			type: ApplicationCommandOptionType.Subcommand,
 			name: "view",
-			description: "Voir votre profil",
+			description: "See your profile",
 			options: [
 				{
 					type: ApplicationCommandOptionType.User,
-					description: "L'utilisateur dont vous voulez voir le profil",
+					description: "User to see profile of",
 					name: "user",
 					required: false,
 				},
@@ -33,7 +33,7 @@ export default {
 				let user = interaction.options.getUser("user", false) ?? interaction.user;
 				let userProfile = await UserModel.findOne({ id: user.id });
 				if (!userProfile) {
-					await interaction.editReply("Ce profil n'existe pas.");
+					await interaction.editReply("This user doesn't have a profile.");
 					return;
 				} else {
 					let { embeds } = customEmbeds.profile(userProfile as User, user);
@@ -44,16 +44,16 @@ export default {
 		{
 			type: ApplicationCommandOptionType.SubcommandGroup,
 			name: "edit",
-			description: "Editer votre profil",
+			description: "Edit your profile",
 			options: [
 				{
 					type: ApplicationCommandOptionType.Subcommand,
-					description: "Mettre à jour votre citation de profil",
+					description: "Update your quote",
 					name: "quote",
 					options: [
 						{
 							type: ApplicationCommandOptionType.String,
-							description: "Votre nouvelle citation",
+							description: "new quote",
 							name: "quote",
 							required: true,
 						},
@@ -62,24 +62,24 @@ export default {
 						let user = interaction.user;
 						let userProfile = await UserModel.findOne({ id: user.id });
 						if (!userProfile) {
-							await interaction.editReply("Vous n'avez pas de profil.");
+							await interaction.editReply("You don't have a profile.");
 							return;
 						} else {
 							let quote = interaction.options.getString("quote", true);
 							userProfile.quote = quote;
 							await userProfile.save();
-							await interaction.editReply("Votre citation a bien été mise à jour.");
+							await interaction.editReply("Your quote has been updated.");
 						}
 					},
 				},
 				{
 					type: ApplicationCommandOptionType.Subcommand,
-					description: "Mettre à jour votre personnage favori",
+					description: "Edit your favorite character",
 					name: "favorite",
 					options: [
 						{
 							type: ApplicationCommandOptionType.String,
-							description: "Votre nouvelle personnage favori",
+							description: "Your favorite character",
 							name: "character",
 							autocomplete: true,
 							required: true,
@@ -89,14 +89,15 @@ export default {
 						let user = interaction.user;
 						let userProfile = await UserModel.findOne({ id: user.id });
 						if (!userProfile) {
-							await interaction.editReply("Vous n'avez pas de profil.");
+							//TODO: Add a link to the import command
+							await interaction.editReply("You don't have a profile.");
 							return;
 						} else {
 							let waifuId = interaction.options.getString("character", true);
 							let newFavoriteWaifu = userProfile.waifus.find((waifu) => waifu.id.toString() === waifuId);
 							userProfile.favorite = newFavoriteWaifu;
 							userProfile.save();
-							await interaction.editReply("Votre personnage favori a bien été mise à jour.");
+							await interaction.editReply("Your favorite character has been updated.");
 						}
 					},
 				},

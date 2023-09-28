@@ -47,7 +47,7 @@ export async function autocompleteCharacter(interaction: AutocompleteInteraction
 		if (!profile || profile.waifus.length === 0) {
 			return interaction.respond([
 				{
-					name: `${targetId === interaction.user.id ? "Tu n'as pas de profil" : "Cet utilisateur n'a pas de profil ou de personnage"}`,
+					name: `${targetId === interaction.user.id ? "You don't have a profile" : "This user doesn't have a profile"}`,
 					value: "",
 				},
 			]);
