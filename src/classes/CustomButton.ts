@@ -14,7 +14,7 @@ export default class CustomButton implements InteractionButtonComponentData {
 	disabled?: boolean | undefined;
 	emoji: ComponentEmojiResolvable | undefined;
 	label: string | undefined;
-	type: ComponentType = ComponentType.Button;
+	type: ComponentType.Button;
 	regexValidator?: RegExp | undefined;
 
 	execute: (interaction: ButtonInteraction<CacheType>, ...args: any[]) => Promise<void | any>;
