@@ -68,14 +68,13 @@ export async function autocompleteCharacter(interaction: AutocompleteInteraction
 	}
 }
 
-
 export async function returnDominantColor(image: string) {
 	let color: Array<number>;
 	//check if image is something else than a png
 	if (image.includes(".png")) {
-	color = await colorThief.getColor(image);
+		color = await colorThief.getColor(image);
 	} else {
-		color = [255, 255, 255]
+		color = [255, 255, 255];
 	}
 	return color;
 }
@@ -87,6 +86,23 @@ export function componentToHex(c: number) {
 
 export function rgbToHex(r: number, g: number, b: number) {
 	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+/**
+ * 
+ * @param group Array to split into chunks
+ * @param size  Size of the chunks
+ * @param length Max number of chunks to return (default: Infinity)
+ * @returns Array of chunks
+ */
+export function groupArray<T>(group: Array<T>, size: number, length: number = Infinity) {
+	return group
+		.reduce(
+			(accumulator: Array<Array<T>>, current: T, index: number, original: Array<T>) =>
+				index % size == 0 ? accumulator.concat([original.slice(index, index + size)]) : accumulator,
+			[]
+		)
+		.filter((single, index) => index < length);
 }
 
 export async function getAllMediasForAllWaifus(userProfile: User): Promise<boolean> {
@@ -107,35 +123,43 @@ export async function getAllMediasForAllWaifus(userProfile: User): Promise<boole
 					}
 				}
 			}
-		}`
+		}`;
 	}
 	request += `}`;
-	return axios.post("https://graphql.anilist.co", {
-		query: request,
-		variables: {
-			in: userProfile.waifus.map(w => w.id)
-		}
-	}).then(res => {
-		let i = 1;
-		userProfile.waifus.forEach(w => {
-			let media = res.data.data[`a_${Math.ceil(i / 50)}`].characters.find((c:any) => c.id == w.id).media.nodes.filter((m:any) => m.source == "ORIGINAL")[0];
-			if (media == undefined) {
-				media = res.data.data[`a_${Math.ceil(i / 50)}`].characters.find((c:any) => c.id == w.id).media.nodes[0];
-			}
-			i++;
-			if (media != undefined) {
-				w.media = {
-					id: media.id,
-					title: {
-						romaji: media.title.romaji,
-						english: media.title.english
-					}
-				};
-			}
+	import("fs").then(({ writeFileSync }) => {
+		writeFileSync(`${process.cwd()}/request.gql`, request);
+	});
+	return axios
+		.post("https://graphql.anilist.co", {
+			query: request,
+			variables: {
+				in: userProfile.waifus.map((w) => w.id),
+			},
 		})
-		return true;
-	}).catch(err => {
-		console.error(err);
-		return false;
-	})
+		.then((res) => {
+			let i = 1;
+			userProfile.waifus.forEach((w) => {
+				let media = res.data.data[`a_${Math.ceil(i / 50)}`].characters
+					.find((c: any) => c.id == w.id)
+					.media.nodes.filter((m: any) => m.source == "ORIGINAL")[0];
+				if (media == undefined) {
+					media = res.data.data[`a_${Math.ceil(i / 50)}`].characters.find((c: any) => c.id == w.id).media.nodes[0];
+				}
+				i++;
+				if (media != undefined) {
+					w.media = {
+						id: media.id,
+						title: {
+							romaji: media.title.romaji,
+							english: media.title.english,
+						},
+					};
+				}
+			});
+			return true;
+		})
+		.catch((err) => {
+			console.error(err);
+			return false;
+		});
 }
