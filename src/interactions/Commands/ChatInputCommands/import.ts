@@ -14,7 +14,7 @@ export default {
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
 		if (interaction.deferred || interaction.replied) {
 			interaction.editReply({ content: `${CustomEmotes.loading} ${interaction.client.user.username} réfléchit...` });
-		}else{
+		} else {
 			await interaction.deferReply({ ephemeral: true });
 		}
 		const userId = interaction.user.id;
@@ -29,12 +29,13 @@ export default {
 			return;
 		} else {
 			userDatabaseProfile = new UserModel(userProfile);
-			if (!await getAllMediasForAllWaifus(userDatabaseProfile as User)) {
-				await interaction.editReply("An error occured while fetching your waifus' medias.");
-				return;
-			} else {
+			try {
+				userDatabaseProfile = await getAllMediasForAllWaifus(userDatabaseProfile);
 				await userDatabaseProfile.save();
 				await interaction.editReply("Profile successfully imported !");
+			} catch (e) {
+				await interaction.editReply("An error occured while fetching your waifus' medias.");
+				return;
 			}
 		}
 	},
