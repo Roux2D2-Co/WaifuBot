@@ -16,7 +16,7 @@ export default class Anilist {
 	static async getRandomCharacter(not_in?: number[]): Promise<AnilistWaifu> {
 		let { data: waifu } = await axios.post(
 			this.__API_URL,
-			{ query, variables: { pageNumber: randomInt(129169), not_in: [1] } },
+			{ query, variables: { pageNumber: randomInt(129169), not_in } },
 			{ transformResponse: responseTransformer }
 		);
 
