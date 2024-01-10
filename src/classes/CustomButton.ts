@@ -19,12 +19,13 @@ export default class CustomButton implements InteractionButtonComponentData {
 
 	execute: (interaction: ButtonInteraction<CacheType>, ...args: any[]) => Promise<void | any>;
 	build = () => {
-		return new ButtonBuilder()
-			.setCustomId(this.customId)
-			.setStyle(this.style)
-			.setLabel(this.label!)
-			.setDisabled(this.disabled)
-			.setEmoji(this.emoji!);
+		return new ButtonBuilder(this);
+		// Was commented as it seems to work on current buttons
+		// 	// .setCustomId(this.customId)
+		// 	// .setStyle(this.style)
+		// 	// .setLabel(this.label!)
+		// 	// .setDisabled(this.disabled)
+		//  // .setEmoji(this.emoji);
 	};
 
 	constructor(data: InteractionButtonComponentData) {
