@@ -14,9 +14,8 @@ export default new CustomButton({
 			}, config.LOCK_DURATION);
 		});
 	},
-	style: ButtonStyle.Primary,
+	style: ButtonStyle.Danger,
 	type: ComponentType.Button,
 	disabled: false,
-	emoji: "🛑",
 	label: "STOP",
 } as InteractionButtonComponentData);
