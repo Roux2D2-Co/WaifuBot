@@ -1,11 +1,11 @@
 import { readFileSync } from "fs";
 import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser, Embed, ActionRowBuilder, ButtonBuilder } from "discord.js";
-import { AnilistWaifu } from "../classes/Anilist";
 import { Waifu } from "../classes/Waifu";
 import { rgbToHex } from "./utils";
 import { User as DatabaseUser } from "../database/models/user";
 import lockDrop from "../interactions/Components/Buttons/lockDrop";
 import characterOwnCheck from "../interactions/Components/Buttons/characterOwnCheck";
+import { AnilistWaifu } from "../classes/AnilistWaifu";
 
 function getObfuscatedWaifuName(words: string): string {
 	let letters: string[] = [];
@@ -63,7 +63,7 @@ export default {
 		return { embeds: [waifuEmbed], files: [attachment], components: [actionRow] };
 	},
 
-	rolledWaifu: (waifu: AnilistWaifu): { embeds: EmbedBuilder[] } => {
+	rolledWaifu: (waifu: AnilistWaifu<false>): { embeds: EmbedBuilder[] } => {
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle(waifu.name.full)
 			.setURL(`https://anilist.co/character/${waifu.id}`)
@@ -72,7 +72,7 @@ export default {
 		return { embeds: [waifuEmbed] };
 	},
 
-	claimedWaifu: (waifu: AnilistWaifu, userId: string): { embeds: EmbedBuilder[] } => {
+	claimedWaifu: (waifu: AnilistWaifu<false>, userId: string): { embeds: EmbedBuilder[] } => {
 		const loli = isNaN(parseInt(waifu.age)) ? false : parseInt(waifu.age) < 16 ? true : false;
 
 		const waifuEmbed = new EmbedBuilder()

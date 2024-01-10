@@ -1,9 +1,9 @@
 import axios from "axios";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { randomInt } from "../utils/utils";
-import { AnilistWaifu } from "./AnilistWaifu";
 import { ObtentionWay } from "./ObtentionWay";
 import { Waifu } from "./Waifu";
+import { AnilistWaifu } from "./AnilistWaifu";
 
 const query = readFileSync("./utils/randomAnilistCharacter.gql", "utf-8");
 const getWaifuByIdQuery = readFileSync("./utils/getAnilistCharacterById.gql", "utf-8");
@@ -59,5 +59,3 @@ export default class Anilist {
 		},
 	};
 }
-
-export { AnilistWaifu };
