@@ -44,7 +44,7 @@ type CommandNames = { command: string; subCommandGroup?: string; subCommand?: st
 (async () => {
 	for await (const file of readdirSync(__dirname).filter((file) => file.endsWith(".js"))) {
 		if (file === thisFileName) continue;
-		console.log(`Chargement de la commande ${__dirname}/${file}`);
+		console.log(`Chargement de la commande ${__dirname.split(/\\|\//g).at(-1)}/${file}`);
 		let command = await import(`./${file}`).then((m) => m.default as ChatInputApplicationCommandData);
 		localCommands.set(command.name, command);
 	}
@@ -147,14 +147,14 @@ export default {
 					const commandName = `/${localCommand.name}`;
 					let possibilites: { name: string; value: string }[] = [];
 					let subcommandGroups = localCommand.options?.filter(
-						(option: { type: any }) => option.type === ApplicationCommandOptionType.SubcommandGroup
+						(option) => option.type === ApplicationCommandOptionType.SubcommandGroup
 					) as ApplicationCommandSubGroupData[];
 					let firstLevelSubcommands = localCommand.options?.filter(
-						(option: { type: any }) => option.type === ApplicationCommandOptionType.Subcommand
+						(option) => option.type === ApplicationCommandOptionType.Subcommand
 					) as ApplicationCommandSubCommandData[];
 					for (const subCommandGroup of subcommandGroups ?? []) {
 						let secondLevelsCommands = subCommandGroup.options?.filter(
-							(option: { type: any }) => option.type === ApplicationCommandOptionType.Subcommand
+							(option) => option.type === ApplicationCommandOptionType.Subcommand
 						);
 						for (const secondLevelCommand of secondLevelsCommands ?? []) {
 							possibilites.push({
