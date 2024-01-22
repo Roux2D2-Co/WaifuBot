@@ -15,7 +15,7 @@ function getObfuscatedWaifuName(words: string): string {
 		let result = /\b(.{1}).*? ?\b/gim.exec(word);
 		if (!!result) letters.push(result[1]);
 		else {
-			console.error(`WUT ? ${word}`);
+			console.error(`WUT ? |${word}| -> ${words}`);
 		}
 	});
 

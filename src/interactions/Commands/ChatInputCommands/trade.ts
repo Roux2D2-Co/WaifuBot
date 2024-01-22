@@ -128,7 +128,7 @@ export default {
 			return;
 		}
 
-		const megaCanvas = PImage.make(charImageDimensions.width * 3, charImageDimensions.height, {});
+		const megaCanvas = PImage.make(charImageDimensions.width * 3, charImageDimensions.height);
 		const c = megaCanvas.getContext("2d");
 		c.clearRect(0, 0, megaCanvas.width, megaCanvas.height);
 

@@ -1,10 +1,4 @@
-import {
-	ChatInputApplicationCommandData,
-	ApplicationCommandType,
-	ChatInputCommandInteraction,
-	GuildResolvable,
-	time
-} from "discord.js";
+import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, GuildResolvable, time } from "discord.js";
 import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
