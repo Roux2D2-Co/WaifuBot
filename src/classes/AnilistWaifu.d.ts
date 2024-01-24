@@ -25,36 +25,34 @@ type MediaTitle = {
 	english: string;
 };
 
-type MediaEdge<FromAnilist> = {
-	node: WaifuMedia<FromAnilist>;
+type MediaEdge = {
+	node: WaifuMedia;
 };
 
-type WaifuMedia<FromAnilist extends boolean = false> = {
+type WaifuMedia = {
 	id: int;
-	title: If<FromAnilist, MediaTitle, string>;
+	title: MediaTitle;
 	isAdult: boolean;
 };
 
-type WaifuMediaNodes = Array<WaifuMedia<true>>;
+type WaifuMediaEdges = { edges: Array<MediaEdge> };
 
-type WaifuMediaEdges<FromAnilist> = Array<MediaEdge<FromAnilist>>;
-
-type AnilistWaifu<FromAnilist extends boolean = false> = {
+type AnilistWaifu = {
 	id: number;
 	age: string;
 	siteUrl: string;
 	image: WaifuImage;
 	name: WaifuName;
 	gender: string;
-	media: If<FromAnilist, { edges: WaifuMediaEdges<FromAnilist> }, { nodes: WaifuMediaNodes }>;
+	media: WaifuMediaEdges;
 };
 
-type AnilistWaifuMediaImport = Pick<Waifu<true>, "media" | "id" | "isAdult">;
+type AnilistWaifuMediaImport = Pick<Waifu, "media" | "id" | "isAdult">;
 
 type AnilistWaifuImportQueryResponse = {
 	data: {
 		[key: string]: {
-			characters: Array<AnilistWaifu<true>>;
+			characters: Array<AnilistWaifu>;
 		};
 	};
 };

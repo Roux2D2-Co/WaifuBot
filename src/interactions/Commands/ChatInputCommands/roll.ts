@@ -52,7 +52,7 @@ export default {
 				}
 
 				await interaction.reply({
-					content: `You can roll by spending tokens !\nNext free roll in ${time(new Date(userDatabaseProfile.nextRoll), "R")}}`,
+					content: `You can roll by spending tokens !\nNext free roll in ${time(new Date(userDatabaseProfile.nextRoll), "R")}`,
 					components: [actionRow],
 					ephemeral: true,
 				});

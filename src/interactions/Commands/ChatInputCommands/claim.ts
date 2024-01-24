@@ -6,6 +6,7 @@ import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
 import { CustomEmotes } from "../../../utils/customEmotes";
 import { guildDropCooldowns } from "./dropWaifu";
+import { sleep } from "../../../utils/utils";
 
 export default {
 	dmPermission: false,
@@ -15,11 +16,7 @@ export default {
 	options: [{ type: ApplicationCommandOptionType.String, name: "name", description: "Waifu name", required: true }],
 
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-		if (interaction.deferred || interaction.replied) {
-			interaction.editReply({ content: `${CustomEmotes.loading} ${interaction.client.user.username} réfléchit...` });
-		} else {
-			await interaction.deferReply({ ephemeral: true });
-		}
+		await interaction.deferReply({ ephemeral: true });
 		const userId = interaction.user.id;
 		let userDatabaseProfile = await UserModel.findOne({ id: userId });
 		if (!userDatabaseProfile) {
@@ -27,7 +24,7 @@ export default {
 			await interaction.editReply("You don't have any profile");
 		} else {
 			const waifu = interaction.guild!.waifu;
-			if(!waifu) {
+			if (!waifu) {
 				await interaction.editReply("There is no waifu to claim");
 				return;
 			}
@@ -50,6 +47,7 @@ export default {
 				interaction.guild!.waifuMessage.edit({ embeds }).then(() => {
 					rmSync(`./assets/images/${waifu.id}.png`);
 				});
+				sleep(5000).then(() => interaction.deleteReply())
 			} else {
 				await interaction.editReply("Wrong name !");
 			}

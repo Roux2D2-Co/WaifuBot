@@ -11,6 +11,7 @@ export interface Waifu {
 			romaji: string;
 			english: string;
 		};
+		isAdult: boolean;
 	};
 	type: ObtentionWay;
 	id: number;
@@ -39,7 +40,7 @@ export const WaifuSchema = new Schema({
 	media: {
 		id: {
 			type: String,
-			required : false,
+			required: false,
 		},
 		title: {
 			romaji: {
@@ -50,6 +51,10 @@ export const WaifuSchema = new Schema({
 				type: String,
 				required: false,
 			},
+		},
+		isAdult: {
+			type: Boolean,
+			required: false,
 		},
 	},
 	id: {

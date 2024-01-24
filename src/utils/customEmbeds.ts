@@ -63,17 +63,19 @@ export default {
 		return { embeds: [waifuEmbed], files: [attachment], components: [actionRow] };
 	},
 
-	rolledWaifu: (waifu: AnilistWaifu<false>): { embeds: EmbedBuilder[] } => {
+	rolledWaifu: (waifu: AnilistWaifu): { embeds: EmbedBuilder[] } => {
+		const media = waifu.media.edges[0].node
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle(waifu.name.full)
 			.setURL(`https://anilist.co/character/${waifu.id}`)
-			.setDescription(`You rolled ${waifu.name.full} (${waifu.id})!\n\n*(${waifu.media.nodes[0].title.romaji} ${waifu.media.nodes[0].isAdult ? "🔞" : ""})*`)
+			.setDescription(`You rolled ${waifu.name.full} (${waifu.id})!\n\n*(${media.title.romaji} ${media.isAdult ? "🔞" : ""})*`)
 			.setThumbnail(waifu.image.large);
 		return { embeds: [waifuEmbed] };
 	},
 
-	claimedWaifu: (waifu: AnilistWaifu<false>, userId: string): { embeds: EmbedBuilder[] } => {
+	claimedWaifu: (waifu: AnilistWaifu, userId: string): { embeds: EmbedBuilder[] } => {
 		const loli = isNaN(parseInt(waifu.age)) ? false : parseInt(waifu.age) < 16 ? true : false;
+		const media = waifu.media.edges[0].node
 
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle(waifu.name.full)
@@ -89,7 +91,7 @@ export default {
 						: ""
 				}
 				
-				*(${waifu.media.nodes[0].title.romaji} ${waifu.media.nodes[0].isAdult ? "🔞" : ""})*`
+				*(${media.title.romaji} ${media.isAdult ? "🔞" : ""})*`
 			)
 			.setImage("attachment://nope.png")
 			.setColor(loli ? Colors.Red : Colors.Green);

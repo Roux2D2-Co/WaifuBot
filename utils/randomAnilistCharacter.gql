@@ -1,4 +1,4 @@
-query charactersRandom ($pageNumber: Int, $not_in: [Int]) {
+query charactersRandom($pageNumber: Int, $not_in: [Int]) {
 	Page(perPage: 1, page: $pageNumber) {
 		characters(sort: FAVOURITES_DESC, id_not_in: $not_in) {
 			id
@@ -8,18 +8,20 @@ query charactersRandom ($pageNumber: Int, $not_in: [Int]) {
 				large
 			}
 			name {
-        alternative
+				alternative
 				alternativeSpoiler
-        userPreferred
+				userPreferred
 				full
 			}
-      gender
-			media(perPage: 1, sort: POPULARITY_DESC) {
-        nodes {
-					title {
-						romaji
+			gender
+			media(perPage: 1, sort: [FAVOURITES_DESC, POPULARITY_DESC]) {
+				edges {
+					node {
+						isAdult
+						title {
+							romaji
+						}
 					}
-          isAdult
 				}
 			}
 		}

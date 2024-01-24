@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosResponseTransformer } from "axios";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { randomInt } from "../utils/utils";
 import { ObtentionWay } from "./ObtentionWay";
@@ -7,13 +7,13 @@ import { AnilistWaifu } from "./AnilistWaifu";
 
 const query = readFileSync("./utils/randomAnilistCharacter.gql", "utf-8");
 const getWaifuByIdQuery = readFileSync("./utils/getAnilistCharacterById.gql", "utf-8");
-const responseTransformer = (response: any): AnilistWaifu => {
-	return JSON.parse(response).data.Page.characters[0];
+const responseTransformer: AxiosResponseTransformer = (data,_, status): AnilistWaifu => {
+	return JSON.parse(data).data.Page.characters[0];
 };
 
 export default class Anilist {
 	static __API_URL = "https://graphql.anilist.co";
-	static async getRandomCharacter(not_in?: number[]): Promise<AnilistWaifu> {
+	static async getRandomCharacter(not_in: number[] = []): Promise<AnilistWaifu> {
 		let { data: waifu } = await axios.post(
 			this.__API_URL,
 			{ query, variables: { pageNumber: randomInt(129169), not_in } },
@@ -55,6 +55,7 @@ export default class Anilist {
 				image: anilistWaifu.image.large,
 				date: new Date(),
 				type: obtentionWay ?? ObtentionWay.other,
+				media: anilistWaifu.media.edges[0].node,
 			};
 		},
 	};
