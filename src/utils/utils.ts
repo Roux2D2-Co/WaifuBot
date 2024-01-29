@@ -2,7 +2,8 @@ import { AutocompleteInteraction } from "discord.js";
 import { UserModel, User } from "../database/models/user";
 
 const colorThief = require("colorthief");
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
+import { AnilistWaifuImportQueryResponse } from "../classes/AnilistWaifu";
 
 export function sleep(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
@@ -68,14 +69,13 @@ export async function autocompleteCharacter(interaction: AutocompleteInteraction
 	}
 }
 
-
 export async function returnDominantColor(image: string) {
 	let color: Array<number>;
 	//check if image is something else than a png
 	if (image.includes(".png")) {
-	color = await colorThief.getColor(image);
+		color = await colorThief.getColor(image);
 	} else {
-		color = [255, 255, 255]
+		color = [255, 255, 255];
 	}
 	return color;
 }
@@ -89,53 +89,66 @@ export function rgbToHex(r: number, g: number, b: number) {
 	return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
-export async function getAllMediasForAllWaifus(userProfile: User): Promise<boolean> {
-	let nbPages = Math.ceil(userProfile.waifus.length / 50);
-	let request = `query allMedias($in : [Int]) {`;
-	for (let i = 1; i < nbPages + 1; i++) {
-		request += `a_${i}: Page(perPage: 50, page: ${i}) {
-			characters(sort: ID, id_in: $in) {
-				id
-				media(perPage: 50, sort: ID) {
-					nodes {
-						id
-						source
-						title {
-							romaji
-							english
-						}
+/**
+ *
+ * @param group Array to split into chunks
+ * @param size  Size of the chunks
+ * @param length Max number of chunks to return (default: Infinity)
+ * @returns Array of chunks
+ */
+export function groupArray<T>(group: Array<T>, size: number, length: number = Infinity) {
+	return group
+		.reduce(
+			(accumulator: Array<Array<T>>, current: T, index: number, original: Array<T>) =>
+				index % size == 0 ? accumulator.concat([original.slice(index, index + size)]) : accumulator,
+			[]
+		)
+		.filter((single, index) => index < length);
+}
+
+const maxWaifuPerPage = 50,
+	maxPagePerRequest = 45;
+export function getAllMediasForAllWaifus<T extends User>(userProfile: T): Promise<T> {
+	return new Promise(async (resolve, reject) => {
+		let userWaifus = groupArray(userProfile.waifus, maxWaifuPerPage);
+		do {
+			let waifuPages = userWaifus.splice(0, maxPagePerRequest);
+
+			let request = `query allMedias($in : [Int]) {`;
+			for (let i = 0; i < waifuPages.length; i++) {
+				request += `a_${i}: Page(perPage: ${maxWaifuPerPage}, page: ${i}) {
+				characters(sort: ID, id_in: $in) {
+					id
+					media(perPage: 1, sort:[FAVOURITES_DESC, POPULARITY_DESC]) {
+						edges {
+							node {
+								id
+								isAdult
+								title {
+									romaji
+									english
+								}
+							}
 					}
 				}
 			}
-		}`
-	}
-	request += `}`;
-	return axios.post("https://graphql.anilist.co", {
-		query: request,
-		variables: {
-			in: userProfile.waifus.map(w => w.id)
-		}
-	}).then(res => {
-		let i = 1;
-		userProfile.waifus.forEach(w => {
-			let media = res.data.data[`a_${Math.ceil(i / 50)}`].characters.find((c:any) => c.id == w.id).media.nodes.filter((m:any) => m.source == "ORIGINAL")[0];
-			if (media == undefined) {
-				media = res.data.data[`a_${Math.ceil(i / 50)}`].characters.find((c:any) => c.id == w.id).media.nodes[0];
+		}`;
 			}
-			i++;
-			if (media != undefined) {
-				w.media = {
-					id: media.id,
-					title: {
-						romaji: media.title.romaji,
-						english: media.title.english
-					}
-				};
+			request += `}`;
+			request = request.replace(/\\\\t/g, " ");
+			let res: AxiosResponse<AnilistWaifuImportQueryResponse> = await axios.post("https://graphql.anilist.co", {
+				query: request,
+				variables: {
+					in: waifuPages.flatMap((pages) => pages.map((w) => w.id)),
+				},
+			});
+			const pages = res.data.data;
+			for (const page of Object.values(pages)) {
+				for (const waifu of page.characters) {
+					userProfile.waifus.find((w) => w.id === waifu.id)!.media ||= waifu.media.edges[0]?.node;
+				}
 			}
-		})
-		return true;
-	}).catch(err => {
-		console.error(err);
-		return false;
-	})
+		} while (userWaifus.length > 0);
+		resolve(userProfile);
+	});
 }

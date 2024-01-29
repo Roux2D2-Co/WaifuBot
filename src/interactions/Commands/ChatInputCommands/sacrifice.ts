@@ -34,7 +34,7 @@ export default {
       let waifu = userProfile.waifus.find((w) => w.id.toString() === waifuId);
 
 			await UserModel.findOneAndUpdate({ id: user.id }, { $pull: { waifus: { id: parseInt(waifuId) } }, $inc: { tokens: config.TOKEN_PER_SACRIFICE } });
-			await interaction.editReply(`You rolled ${waifu!.name} for ${config.TOKEN_PER_SACRIFICE} token${config.TOKEN_PER_SACRIFICE > 1 ? "s" : ""}`);
+			await interaction.editReply(`You sacrificed ${waifu!.name} for ${config.TOKEN_PER_SACRIFICE} token${config.TOKEN_PER_SACRIFICE > 1 ? "s" : ""}`);
 		}
 	},
 

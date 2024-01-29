@@ -13,12 +13,14 @@ query charactersRandom($id: Int) {
 			full
 		}
 		gender
-		media(perPage: 1, sort: POPULARITY_DESC) {
-			nodes {
-				title {
-					romaji
+		media(perPage: 1, sort: [FAVOURITES_DESC, POPULARITY_DESC]) {
+			edges {
+				node {
+					isAdult
+					title {
+						romaji
+					}
 				}
-				isAdult
 			}
 		}
 	}

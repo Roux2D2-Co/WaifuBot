@@ -1,4 +1,11 @@
-import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, time } from "discord.js";
+import {
+	ChatInputApplicationCommandData,
+	ApplicationCommandType,
+	ChatInputCommandInteraction,
+	ActionRowBuilder,
+	ButtonBuilder,
+	time,
+} from "discord.js";
 import { ObtentionWay } from "../../../classes/ObtentionWay";
 import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
@@ -17,7 +24,7 @@ export default {
 		let userDatabaseProfile = await UserModel.findOne({ id: userId });
 		if (!userDatabaseProfile) {
 			//TODO : Gérer le cas où le mec a pas de profil
-			await interaction.editReply("You don't have any profile");
+			await interaction.reply({ content: "You don't have any profile", ephemeral: true });
 		} else if (userDatabaseProfile.nextRoll > new Date()) {
 			if (userDatabaseProfile.tokens >= config.TOKENS_PER_ROLL) {
 				let actionRow = new ActionRowBuilder<ButtonBuilder>();
@@ -45,7 +52,7 @@ export default {
 				}
 
 				await interaction.reply({
-					content: `You can roll by spending tokens !\nNext free roll in ${time(new Date(userDatabaseProfile.nextRoll), "R")}}`,
+					content: `You can roll by spending tokens !\nNext free roll in ${time(new Date(userDatabaseProfile.nextRoll), "R")}`,
 					components: [actionRow],
 					ephemeral: true,
 				});
@@ -56,12 +63,13 @@ export default {
 				});
 			}
 		} else {
+			await interaction.deferReply({ ephemeral: false });
 			const waifu = await Anilist.getRandomCharacter(userDatabaseProfile.waifus.map((w) => w.id));
 			userDatabaseProfile.waifus.push(Anilist.transformer.toDatabaseWaifu(waifu, ObtentionWay.roll));
 			userDatabaseProfile.nextRoll = new Date(Date.now() + config.ROLL_COOLDOWN);
 			userDatabaseProfile.save();
 			const { embeds } = await customEmbeds.rolledWaifu(waifu);
-			interaction.reply({ embeds });
+			interaction.editReply({ embeds });
 		}
 	},
 	type: ApplicationCommandType.ChatInput,

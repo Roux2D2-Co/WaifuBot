@@ -1,8 +1,19 @@
-import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, ButtonBuilder, ButtonStyle, ActionRowBuilder, Application, ApplicationCommandOptionType, ComponentType } from "discord.js";
+import {
+	ChatInputApplicationCommandData,
+	ApplicationCommandType,
+	ChatInputCommandInteraction,
+	ButtonBuilder,
+	ButtonStyle,
+	ActionRowBuilder,
+	Application,
+	ApplicationCommandOptionType,
+	ComponentType,
+} from "discord.js";
 import { UserModel } from "../../../database/models/user";
 import { Waifu, WaifuSchema } from "../../../classes/Waifu";
 import customEmbeds from "../../../utils/customEmbeds";
 import { returnDominantColor } from "../../../utils/utils";
+import { CustomEmotes } from "../../../utils/customEmotes";
 
 export default {
     dmPermission: false,

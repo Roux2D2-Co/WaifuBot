@@ -1,4 +1,6 @@
-import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
+import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { CustomEmotes } from "../../../utils/customEmotes";
+import { sleep } from "../../../utils/utils";
 
 /**
  * Les commandes présentes dans le dossier "Commands" sont automatiquement
@@ -27,10 +29,9 @@ export default {
 	guilds: ["780715935593005088"], //les serveurs où la commande est déployée
 
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-		await interaction.deferReply({ ephemeral: true });
-		// do something
-
-		await interaction.editReply({ content: "Le contenu de mon message" });
+		await interaction.reply({ content: "Le contenu de mon message" });
+		await sleep(5_000);
+		await interaction.deleteReply();
 	},
 	type: ApplicationCommandType.ChatInput,
 } as ChatInputApplicationCommandData;

@@ -1,11 +1,11 @@
 import { readFileSync } from "fs";
 import { EmbedBuilder, AttachmentBuilder, Colors, ColorResolvable, User as DiscordUser, Embed, ActionRowBuilder, ButtonBuilder } from "discord.js";
-import { AnilistWaifu } from "../classes/Anilist";
 import { Waifu } from "../classes/Waifu";
 import { rgbToHex } from "./utils";
 import { User as DatabaseUser } from "../database/models/user";
 import lockDrop from "../interactions/Components/Buttons/lockDrop";
 import characterOwnCheck from "../interactions/Components/Buttons/characterOwnCheck";
+import { AnilistWaifu } from "../classes/AnilistWaifu";
 
 function getObfuscatedWaifuName(words: string): string {
 	let letters: string[] = [];
@@ -15,7 +15,7 @@ function getObfuscatedWaifuName(words: string): string {
 		let result = /\b(.{1}).*? ?\b/gim.exec(word);
 		if (!!result) letters.push(result[1]);
 		else {
-			console.error(`WUT ? ${word}`);
+			console.error(`WUT ? |${word}| -> ${words}`);
 		}
 	});
 
@@ -64,16 +64,18 @@ export default {
 	},
 
 	rolledWaifu: (waifu: AnilistWaifu): { embeds: EmbedBuilder[] } => {
+		const media = waifu.media.edges[0].node
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle(waifu.name.full)
 			.setURL(`https://anilist.co/character/${waifu.id}`)
-			.setDescription(`You rolled ${waifu.name.full} (${waifu.id})!\n\n*(${waifu.media.nodes[0].title.romaji} ${waifu.media.nodes[0].isAdult ? "🔞" : ""})*`)
+			.setDescription(`You rolled ${waifu.name.full} (${waifu.id})!\n\n*(${media.title.romaji} ${media.isAdult ? "🔞" : ""})*`)
 			.setThumbnail(waifu.image.large);
 		return { embeds: [waifuEmbed] };
 	},
 
 	claimedWaifu: (waifu: AnilistWaifu, userId: string): { embeds: EmbedBuilder[] } => {
 		const loli = isNaN(parseInt(waifu.age)) ? false : parseInt(waifu.age) < 16 ? true : false;
+		const media = waifu.media.edges[0].node
 
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle(waifu.name.full)
@@ -89,7 +91,7 @@ export default {
 						: ""
 				}
 				
-				*(${waifu.media.nodes[0].title.romaji} ${waifu.media.nodes[0].isAdult ? "🔞" : ""})*`
+				*(${media.title.romaji} ${media.isAdult ? "🔞" : ""})*`
 			)
 			.setImage("attachment://nope.png")
 			.setColor(loli ? Colors.Red : Colors.Green);

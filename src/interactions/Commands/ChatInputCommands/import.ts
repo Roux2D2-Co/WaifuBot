@@ -2,6 +2,7 @@ import axios from "axios";
 import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction } from "discord.js";
 import { getAllMediasForAllWaifus } from "../../../utils/utils";
 import { User, UserModel } from "../../../database/models/user";
+import { CustomEmotes } from "../../../utils/customEmotes";
 
 const WAIFU_API_URL = "https://waifuapi.karitham.dev/user/";
 export default {
@@ -11,7 +12,11 @@ export default {
 	guilds: ["780715935593005088"],
 
 	async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-		await interaction.deferReply({ ephemeral: true });
+		if (interaction.deferred || interaction.replied) {
+			interaction.editReply({ content: `${CustomEmotes.loading} ${interaction.client.user.username} réfléchit...` });
+		} else {
+			await interaction.deferReply({ ephemeral: true });
+		}
 		const userId = interaction.user.id;
 		let userDatabaseProfile = await UserModel.findOne({ id: userId });
 		if (!!userDatabaseProfile) {
@@ -24,12 +29,13 @@ export default {
 			return;
 		} else {
 			userDatabaseProfile = new UserModel(userProfile);
-			if (!await getAllMediasForAllWaifus(userDatabaseProfile as User)) {
-				await interaction.editReply("An error occured while fetching your waifus' medias.");
-				return;
-			} else {
+			try {
+				userDatabaseProfile = await getAllMediasForAllWaifus(userDatabaseProfile);
 				await userDatabaseProfile.save();
 				await interaction.editReply("Profile successfully imported !");
+			} catch (e) {
+				await interaction.editReply("An error occured while fetching your waifus' medias.");
+				return;
 			}
 		}
 	},

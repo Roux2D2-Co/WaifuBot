@@ -4,7 +4,9 @@ import { ObtentionWay } from "../../../classes/ObtentionWay";
 import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
+import { CustomEmotes } from "../../../utils/customEmotes";
 import { guildDropCooldowns } from "./dropWaifu";
+import { sleep } from "../../../utils/utils";
 
 export default {
 	dmPermission: false,
@@ -22,7 +24,7 @@ export default {
 			await interaction.editReply("You don't have any profile");
 		} else {
 			const waifu = interaction.guild!.waifu;
-			if(!waifu) {
+			if (!waifu) {
 				await interaction.editReply("There is no waifu to claim");
 				return;
 			}
@@ -45,6 +47,7 @@ export default {
 				interaction.guild!.waifuMessage.edit({ embeds }).then(() => {
 					rmSync(`./assets/images/${waifu.id}.png`);
 				});
+				sleep(5000).then(() => interaction.deleteReply())
 			} else {
 				await interaction.editReply("Wrong name !");
 			}

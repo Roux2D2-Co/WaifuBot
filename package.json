@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npm run build && npm run start",
-    "build": "npx rimraf dist && ttsc",
+    "build": "npx rimraf dist && tsc",
     "start": "node dist/",
     "prod": "npm run build && node dist/ prod",
     "launch": "npm run build && cd dist/ && node launcher.js",
@@ -19,12 +19,12 @@
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.3",
     "image-converter": "^1.0.0",
+    "jimp": "^0.22.10",
     "mongoose": "^6.8.3",
-    "pureimage": "^0.3.15"
+    "pureimage": "^0.4.13"
   },
   "description": "",
   "devDependencies": {
-    "ts-transformer-keys": "^0.4.4",
-    "ttypescript": "^1.5.15"
+    "typescript": "^5.3.3"
   }
 }

@@ -1,11 +1,4 @@
-import {
-	ChatInputApplicationCommandData,
-	ApplicationCommandType,
-	ChatInputCommandInteraction,
-	ChannelType,
-	GuildResolvable,
-	time,
-} from "discord.js";
+import { ChatInputApplicationCommandData, ApplicationCommandType, ChatInputCommandInteraction, GuildResolvable, time } from "discord.js";
 import Anilist from "../../../classes/Anilist";
 import { UserModel } from "../../../database/models/user";
 import customEmbeds from "../../../utils/customEmbeds";
@@ -36,10 +29,11 @@ export default {
 			interaction.guild!.waifu = randomWaifu;
 			const { embeds, files, components } = await customEmbeds.randomWaifu(randomWaifu);
 			interaction.guild?.channels.fetch(interaction.channelId).then((c) => {
-				if (!c || c.type != ChannelType.GuildText) return;
+				if (!c || !c.isTextBased()) return;
 				c.send({ embeds, files, components }).then((m) => (interaction.guild!.waifuMessage = m));
 				console.log(randomWaifu.name);
 				guildDropCooldowns.set(interaction.guild!.id, new Date(Date.now() + config.DROP_COOLDOWN));
+				interaction.deleteReply();
 			});
 		}
 	},

@@ -58,7 +58,6 @@ export default {
 			type: ApplicationCommandOptionType.String,
 			required: true,
 			autocomplete: true,
-
 		},
 	],
 
@@ -129,8 +128,9 @@ export default {
 			return;
 		}
 
-		const megaCanvas = PImage.make(charImageDimensions.width * 3, charImageDimensions.height, {});
+		const megaCanvas = PImage.make(charImageDimensions.width * 3, charImageDimensions.height);
 		const c = megaCanvas.getContext("2d");
+		c.clearRect(0, 0, megaCanvas.width, megaCanvas.height);
 
 		const userOneWaifuImageReadStream = createReadStream(`./assets/images/${userOneAnilistWaifu.id}.png`);
 		const userOneWaifuImage = await PImage[userOneAnilistWaifu.image.large.endsWith("png") ? "decodePNGFromStream" : "decodeJPEGFromStream"](
@@ -257,13 +257,13 @@ export default {
 			user = interaction.user;
 		} else if (focusedOption.name === "receive") {
 			let targetUserOption = interaction.options.get("user");
-			if(!targetUserOption || !targetUserOption.value){
+			if (!targetUserOption || !targetUserOption.value) {
 				return interaction.respond([]);
-			}else{
+			} else {
 				user = await interaction.guild?.members.fetch(targetUserOption.value as string);
 			}
 		}
-		if(!user) return interaction.respond([]);
+		if (!user) return interaction.respond([]);
 
 		let userProfile = await UserModel.findOne({ id: user.id });
 		if (!userProfile || userProfile.waifus.length === 0) {

@@ -14,17 +14,18 @@ export default class CustomButton implements InteractionButtonComponentData {
 	disabled?: boolean | undefined;
 	emoji: ComponentEmojiResolvable | undefined;
 	label: string | undefined;
-	type: ComponentType = ComponentType.Button;
+	type: ComponentType.Button;
 	regexValidator?: RegExp | undefined;
 
 	execute: (interaction: ButtonInteraction<CacheType>, ...args: any[]) => Promise<void | any>;
 	build = () => {
-		return new ButtonBuilder()
-			.setCustomId(this.customId)
-			.setStyle(this.style)
-			.setLabel(this.label!)
-			.setDisabled(this.disabled)
-			.setEmoji(this.emoji!);
+		return new ButtonBuilder(this);
+		// Was commented as it seems to work on current buttons
+		// 	// .setCustomId(this.customId)
+		// 	// .setStyle(this.style)
+		// 	// .setLabel(this.label!)
+		// 	// .setDisabled(this.disabled)
+		//  // .setEmoji(this.emoji);
 	};
 
 	constructor(data: InteractionButtonComponentData) {
