@@ -1,39 +1,55 @@
-import { ButtonInteraction, ButtonStyle, CacheType, ComponentType, Guild, InteractionButtonComponentData, User, UserResolvable } from "discord.js";
+import {
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonInteraction,
+	ButtonStyle,
+	CacheType,
+	ComponentType,
+	InteractionButtonComponentData,
+	InteractionReplyOptions,
+	InteractionUpdateOptions,
+} from "discord.js";
+
 import CustomButton from "../../../classes/CustomButton";
+import { HintCacheManager } from "../../../classes/Hints";
 import { UserModel } from "../../../database/models/user";
 
-type UserData = {
-	trueName: string;
-	knownName: string;
-	usedHints: { [key: typeof CustomButton.prototype.customId]: number };
-};
+import hintButtons from "../Buttons/hints/allHints";
+import { groupArray } from "../../../utils/utils";
 
-type GuildData = Map<typeof User.prototype.id, UserData>;
-
-const cache: Map<typeof Guild.prototype.id, GuildData> = new Map();
-export function clearGuildCache(guildId: typeof Guild.prototype.id) {
-	cache.delete(guildId);
-}
-
-const getDefaultUserData = (userId: string, waifuName: string): UserData => {
-	return {
-		trueName: waifuName,
-		knownName: waifuName.replace(/\B/g, "*"),
-		usedHints: {},
-	};
-};
+const cache = new HintCacheManager();
 
 export default new CustomButton({
 	customId: "showHint",
 	regexValidator: new RegExp("showHint-(.+)"),
 	async execute(interaction, ...args): Promise<void> {
+		if (!interaction.guild || !interaction.guild.waifu) {
+			interaction.reply({ ephemeral: true, content: "No guild or claimable waifu found" });
+			return;
+		}
 		const regexResult = this.regexValidator!.exec(interaction.customId);
-		const selectedHint = (Array.isArray(regexResult) && regexResult[0]) || null;
-		switch (selectedHint) {
-			default: {
-				displayHints(interaction);
-				break;
+		const selectedHint = Array.isArray(regexResult) && regexResult[1] ? regexResult[1] : null;
+		console.debug(selectedHint);
+		if (!!selectedHint) {
+			let selectedButton = hintButtons[selectedHint];
+			if (!selectedButton) {
+				interaction.reply({ ephemeral: true, content: "Cant' find hint button" });
+			} else {
+				try {
+					let {
+						guild: { id: guildId, waifu },
+						user: { id: userId },
+					} = interaction;
+					const memberHintData = cache.getGuildMember(guildId, waifu.id, userId);
+					const editedMemberHintData = await selectedButton.execute(interaction, memberHintData);
+					cache.setGuildMember(guildId, waifu, userId, editedMemberHintData);
+					displayHints(interaction, true);
+				} catch (e) {
+					interaction.reply({ ephemeral: true, content: (<Error>e).message });
+				}
 			}
+		} else {
+			displayHints(interaction);
 		}
 	},
 	style: ButtonStyle.Primary,
@@ -42,35 +58,38 @@ export default new CustomButton({
 	label: "Hints",
 } as InteractionButtonComponentData);
 
-const displayHints = (interaction: ButtonInteraction<CacheType>) => {
-	const guildId = interaction.guildId ?? "0";
+const displayHints = (interaction: ButtonInteraction<CacheType>, updateMessage?: Boolean) => {
+	if (!interaction.guild?.waifu) return interaction.reply({ content: "Hmm it seems that no waifu has been dropped", ephemeral: true });
+
+	//extract user.id, guild.id and guild.waifu from interaction payload
+	let {
+		guild: { id: guildId, waifu },
+		user: { id: userId },
+	} = interaction;
 
 	// vérification user
-	if (!cache.has(guildId)) cache.set(guildId, new Map());
-	const guildCache = cache.get(guildId)!;
-	if (!guildCache.has(interaction.user.id)) {
-		guildCache.set(interaction.user.id, getDefaultUserData(interaction.user.id, interaction.guild!.waifu));
-	}
-	const userData = guildCache.get(interaction.user.id)!;
-	const revealVowelsButton = getRevealVowel(userData);
-	interaction.reply({ content: "🚧 **WIP** 🚧", ephemeral: true });
-};
 
-const getRevealVowel = (userData: UserData) =>
-	new CustomButton({
-		customId: "showInt-vowels",
-		async execute(interaction, ...args): Promise<void> {
-			// UserModel.findOneAndUpdate({ id: interaction.user.id }, { $inc: { tokens: -1 } });
-			let userData = cache.get(interaction.guildId ?? "0")!.get(interaction.user.id)!;
-			const vowels = "aeiouy".split("");
-			const splittedKnownName = userData.knownName.split("");
-			userData.trueName.split("").forEach((trueNameLetter, idx) => {
-				if (trueNameLetter in vowels) splittedKnownName[idx] = trueNameLetter;
-			});
-			userData.knownName = splittedKnownName.join("");
-		},
-		style: userData.usedHints["showHint-vowels"] ? ButtonStyle.Success : ButtonStyle.Primary,
-		type: ComponentType.Button,
-		disabled: !!userData.usedHints["showHint-vowels"],
-		label: "Reveal Vowels",
-	});
+	if (!cache.getGuild(guildId).has(interaction.guild.waifu.id)) {
+		cache.setGuildWaifu(guildId, waifu);
+	}
+	const memberHintData = cache.getGuildMember(guildId, waifu.id, userId);
+
+	const components: Array<ActionRowBuilder<ButtonBuilder>> = [];
+
+	for (const actRowComponents of groupArray(Object.values(hintButtons), 5)) {
+		let actRow = new ActionRowBuilder<ButtonBuilder>();
+		for (const hintButton of actRowComponents) {
+			actRow.addComponents(hintButton.build(memberHintData));
+		}
+		components.push(actRow);
+	}
+
+	const payload: InteractionReplyOptions = { content: `🚧 **WIP** 🚧\nNom trouvé : \`${memberHintData.knownName}\``, components: components };
+
+	if (!!updateMessage) {
+		interaction.update(payload as InteractionUpdateOptions);
+	} else {
+		payload.ephemeral = true;
+		interaction.reply(payload);
+	}
+};
