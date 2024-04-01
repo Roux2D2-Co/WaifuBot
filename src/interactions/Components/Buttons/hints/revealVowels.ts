@@ -1,7 +1,7 @@
 import { ButtonStyle, ComponentType } from "discord.js";
-import { HintButton, MemberHintData } from "../../../../classes/Hints";
+import { HintButton } from "../../../../classes/Hints";
 
-const BUTTON_ID = "revealVowels"
+const BUTTON_ID = "revealVowels";
 
 export default new HintButton({
 	type: ComponentType.Button,
@@ -18,6 +18,7 @@ export default new HintButton({
 		memberHintData.usedHints[BUTTON_ID] = 1;
 		return memberHintData;
 	},
-	style: (buttonData, memberHintData) => (memberHintData.usedHints[buttonData.customId] ? ButtonStyle.Success : ButtonStyle.Primary),
+	disabled: (_, memberHintData) => !!memberHintData.usedHints[BUTTON_ID],
+	style: (_, memberHintData) => (memberHintData.usedHints[BUTTON_ID] ? ButtonStyle.Success : ButtonStyle.Primary),
 	label: "Reveal Vowels",
 });
