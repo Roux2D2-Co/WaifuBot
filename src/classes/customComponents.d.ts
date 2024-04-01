@@ -1,4 +1,5 @@
 import { client } from "src/index";
+import CustomModal from "./CustomModal";
 
 declare module "discord.js" {
 	export interface BaseApplicationCommandData {
@@ -18,6 +19,10 @@ declare module "discord.js" {
 		regexValidator?: RegExp;
 		execute: (interaction: BaseInteraction, ...args: any[]) => Promise<void | any>;
 		customId: string;
+	}
+
+	export interface ModalComponentData extends Omit<BaseComponentData, "type" | "showModalAndWaitForSubmit"> {
+		execute?: (interaction: ModalSubmitInteraction, ...args: any[]) => Promise<void | any>;
 	}
 
 	export interface InteractionButtonComponentData {
