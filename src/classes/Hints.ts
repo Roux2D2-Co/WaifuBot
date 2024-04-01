@@ -1,4 +1,12 @@
-import { BaseComponentData, BaseInteraction, ButtonBuilder, ButtonInteraction, CacheType, Guild, User } from "discord.js";
+import {
+	BaseComponentData,
+	BaseInteraction,
+	ButtonBuilder,
+	ButtonInteraction,
+	CacheType,
+	Guild,
+	User,
+} from "discord.js";
 import CustomButton from "./CustomButton";
 import { AnilistWaifu } from "./AnilistWaifu";
 
@@ -78,7 +86,7 @@ export class HintCacheManager {
 	};
 }
 
-export interface InteractionHintButtonComponentData extends BaseComponentData {
+export interface InteractionHintButtonComponentData extends Omit<BaseComponentData, "execute"> {
 	//InteractionHintButtonComponentData is defined with references to CustomButton which extends BaseButtonComponentData so it should be update proof
 	type: typeof CustomButton.prototype.type;
 	disabled?: (buttonData: HintButton, memberHintData: MemberHintData) => typeof CustomButton.prototype.disabled;
@@ -94,7 +102,7 @@ export interface InteractionHintButtonComponentData extends BaseComponentData {
 	 * @param args
 	 * @returns MemberHintData (new value)
 	 */
-	execute: (interaction: BaseInteraction, memberHintData: MemberWaifuHintData, ...args: any[]) => Promise<MemberHintData>;
+	execute: (interaction: ButtonInteraction, memberHintData: MemberWaifuHintData, ...args: any[]) => Promise<MemberHintData>;
 }
 
 type ReturnTypeMap<T> = {
@@ -110,7 +118,7 @@ export class HintButton implements InteractionHintButtonComponentData {
 	label: typeof CustomButton.prototype.label;
 	style: (buttonData: HintButton, memberHintData: MemberHintData) => typeof CustomButton.prototype.style;
 	customId: typeof CustomButton.prototype.customId;
-	execute: (interaction: BaseInteraction<CacheType>, memberHintData: MemberWaifuHintData, ...args: any[]) => Promise<any>;
+	execute: (interaction: ButtonInteraction<CacheType>, memberHintData: MemberWaifuHintData, ...args: any[]) => Promise<any>;
 	type: typeof CustomButton.prototype.type;
 	regexValidator?: RegExp | undefined;
 
@@ -127,8 +135,6 @@ export class HintButton implements InteractionHintButtonComponentData {
 				toCustomButtonMap[key as keyof HintButtonToCustomButtonMap] = this[key as keyof this] as any;
 			}
 		}
-		console.debug(toCustomButtonMap);
-
 		return new ButtonBuilder(toCustomButtonMap);
 	};
 
