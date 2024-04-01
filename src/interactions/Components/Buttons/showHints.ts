@@ -21,15 +21,15 @@ const cache = new HintCacheManager();
 
 export default new CustomButton({
 	customId: "showHint",
-	regexValidator: new RegExp("showHint-(.+)"),
+	regexValidator: new RegExp("showHint-.+"),
 	async execute(interaction, ...args): Promise<void> {
 		if (!interaction.guild || !interaction.guild.waifu) {
 			interaction.reply({ ephemeral: true, content: "No guild or claimable waifu found" });
 			return;
 		}
 		const regexResult = this.regexValidator!.exec(interaction.customId);
-		const selectedHint = Array.isArray(regexResult) && regexResult[1] ? regexResult[1] : null;
-		console.debug(selectedHint);
+		const selectedHint = Array.isArray(regexResult) && regexResult[0] ? regexResult[0] : null;
+
 		if (!!selectedHint) {
 			let selectedButton = hintButtons[selectedHint];
 			if (!selectedButton) {
@@ -45,7 +45,13 @@ export default new CustomButton({
 					cache.setGuildMember(guildId, waifu, userId, editedMemberHintData);
 					displayHints(interaction, true);
 				} catch (e) {
-					interaction.reply({ ephemeral: true, content: (<Error>e).message });
+					let errMessage = (<Error>e).message
+					if(!!interaction){
+						let replyMethod = (interaction.replied ? interaction.editReply : interaction.reply)
+						replyMethod({ ephemeral: true, content: errMessage });
+					}else{
+						console.error(errMessage)
+					}
 				}
 			}
 		} else {
@@ -86,7 +92,9 @@ const displayHints = (interaction: ButtonInteraction<CacheType>, updateMessage?:
 
 	const payload: InteractionReplyOptions = { content: `🚧 **WIP** 🚧\nNom trouvé : \`${memberHintData.knownName}\``, components: components };
 
-	if (!!updateMessage) {
+	if (!!interaction.replied) {
+		interaction.editReply(payload);
+	} else if (!!updateMessage) {
 		interaction.update(payload as InteractionUpdateOptions);
 	} else {
 		payload.ephemeral = true;
