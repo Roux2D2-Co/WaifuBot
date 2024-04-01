@@ -8,7 +8,7 @@ import {
 	ButtonBuilder,
 } from "discord.js";
 
-export type ClickableButtonStyle = Exclude<ButtonStyle, ButtonStyle.Link>
+export type ClickableButtonStyle = Exclude<ButtonStyle, ButtonStyle.Link>;
 
 export default class CustomButton implements InteractionButtonComponentData {
 	style: ClickableButtonStyle;
