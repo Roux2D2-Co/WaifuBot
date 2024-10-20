@@ -1,5 +1,4 @@
 import { client } from "src/index";
-import CustomModal from "./CustomModal";
 
 declare module "discord.js" {
 	export interface BaseApplicationCommandData {
