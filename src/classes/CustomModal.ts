@@ -14,7 +14,7 @@ import {
 
 export default class CustomModal implements ModalComponentData {
 	title: string;
-	components: (JSONEncodable<APIActionRowComponent<APITextInputComponent>> | ActionRowData<ModalActionRowComponentData>)[];
+	components: (JSONEncodable<APIActionRowComponent<APITextInputComponent>> | ActionRowData<ModalActionRowComponentData>)[] = [];
 	execute?: ((interaction: ModalSubmitInteraction<CacheType>, ...args: any[]) => Promise<any>) | undefined;
 	regexValidator?: RegExp | undefined;
 	customId: string;
@@ -25,7 +25,7 @@ export default class CustomModal implements ModalComponentData {
 
 	constructor(data: ModalComponentData) {
 		this.title = data.title;
-		this.components = data.components;
+		this.components.push(...data.components);
 		this.execute = data.execute;
 		this.regexValidator = data.regexValidator;
 		this.customId = data.customId;
