@@ -7,37 +7,23 @@ import { AnilistWaifu } from "./AnilistWaifu";
 
 const query = readFileSync("./utils/randomAnilistCharacter.gql", "utf-8");
 const getWaifuByIdQuery = readFileSync("./utils/getAnilistCharacterById.gql", "utf-8");
-const responseTransformer: AxiosResponseTransformer = (data, _, status): AnilistWaifu => {
-	try {
-		return JSON.parse(data).data.Page.characters[0];
-	} catch (e) {
-		console.error(JSON.stringify(JSON.parse(data), null, 4));
-	} finally {
-		return JSON.parse(data).data.Page.characters[0];
-	}
-};
 
 export default class Anilist {
 	static __API_URL = "https://graphql.anilist.co";
 	static async getRandomCharacter(not_in: number[] = []): Promise<AnilistWaifu> {
-		// let { data: waifu } = await axios.post(
-		// 	this.__API_URL,
-		// 	{ query, variables: { pageNumber: randomInt(129169), not_in } },
-		// 	{ transformResponse: responseTransformer }
-		// )
-
 		let res = await axios.post(this.__API_URL, { query, variables: { pageNumber: randomInt(129169), not_in } });
 		try {
-			let waifu = JSON.parse(res.data).data.Page.characters[0];
+			let waifu = res.data.data.Page.characters[0];
 
 			//download waifu image
 			const { data: image } = await axios.get(waifu.image.large, { responseType: "arraybuffer" });
+			
 			//save waifu image
 			await writeFileSync(`./assets/images/${waifu.id}.png`, image);
 			return waifu;
 		} catch (e) {
-			writeFileSync(`anilist-query-random-char-crash-${new Date().toISOString()}`, res.toString());
-			process.exit();
+			writeFileSync(`anilist-query-random-char-crash-${new Date().toISOString().replace(/\W/g, "-")}.crash.log`, JSON.stringify(res.data, null, 4));
+			throw(e)
 		}
 	}
 
