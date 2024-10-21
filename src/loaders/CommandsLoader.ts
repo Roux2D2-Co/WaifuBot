@@ -94,6 +94,8 @@ export class Loader {
 		}
 		client.localComponents = new Collection<string, BaseComponentData>();
 		for await (const file of files) {
+			//ignore Component Types subfolders (Buttons -> hints) as they may not have been created to be used as is
+			if(fs.statSync(file).isDirectory()) continue;
 			import(file).then(({ default: command }: { [key: string]: BaseComponentData }) => {
 				client.localComponents.set(command.customId, command);
 			});

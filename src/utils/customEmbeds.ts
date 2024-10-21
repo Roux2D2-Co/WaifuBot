@@ -5,6 +5,7 @@ import { rgbToHex } from "./utils";
 import { User as DatabaseUser } from "../database/models/user";
 import lockDrop from "../interactions/Components/Buttons/lockDrop";
 import characterOwnCheck from "../interactions/Components/Buttons/characterOwnCheck";
+import showHint from "../interactions/Components/Buttons/showHints";
 import { AnilistWaifu } from "../classes/AnilistWaifu";
 
 function getObfuscatedWaifuName(words: string): string {
@@ -47,8 +48,9 @@ export default {
 		const lockButton = lockDrop.build();
 		const ownCheckButton = characterOwnCheck.build();
 		ownCheckButton.setCustomId(`${characterOwnCheck.customId}-${waifu.id}`);
+		const showHintsButton = showHint.build()
 
-		actionRow.addComponents(lockButton, ownCheckButton);
+		actionRow.addComponents(lockButton, ownCheckButton, showHintsButton);
 
 		const waifuEmbed = new EmbedBuilder()
 			.setTitle("Random Waifu Dropped !")

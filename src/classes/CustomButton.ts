@@ -8,8 +8,10 @@ import {
 	ButtonBuilder,
 } from "discord.js";
 
+export type ClickableButtonStyle = Exclude<ButtonStyle, ButtonStyle.Link>;
+
 export default class CustomButton implements InteractionButtonComponentData {
-	style: ButtonStyle.Primary | ButtonStyle.Secondary | ButtonStyle.Success | ButtonStyle.Danger;
+	style: ClickableButtonStyle;
 	customId: string;
 	disabled?: boolean | undefined;
 	emoji: ComponentEmojiResolvable | undefined;
@@ -20,12 +22,6 @@ export default class CustomButton implements InteractionButtonComponentData {
 	execute: (interaction: ButtonInteraction<CacheType>, ...args: any[]) => Promise<void | any>;
 	build = () => {
 		return new ButtonBuilder(this);
-		// Was commented as it seems to work on current buttons
-		// 	// .setCustomId(this.customId)
-		// 	// .setStyle(this.style)
-		// 	// .setLabel(this.label!)
-		// 	// .setDisabled(this.disabled)
-		//  // .setEmoji(this.emoji);
 	};
 
 	constructor(data: InteractionButtonComponentData) {
