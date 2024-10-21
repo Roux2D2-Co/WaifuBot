@@ -1,13 +1,17 @@
-import { ButtonStyle, ComponentType, DiscordjsError, DiscordjsErrorCodes, InteractionCollector, discordSort } from "discord.js";
-import { HintButton } from "../../../../classes/Hints";
-import getOneLetterModal from "../../Modals/getOneLetter";
+import {
+  ButtonStyle,
+  ComponentType,
+  DiscordjsError,
+  DiscordjsErrorCodes
+} from 'discord.js'
+import { HintButton } from '../../../../classes/Hints'
+import getOneLetterModal from '../../Modals/getOneLetter'
 
-const BUTTON_ID = "reveal-one-letter";
+const BUTTON_ID = 'reveal-one-letter'
 export default new HintButton({
 	type: ComponentType.Button,
 	customId: BUTTON_ID,
 	execute: async (interaction, memberHintData) => {
-		console.log(interaction.id);
 		try {
 			const oneLetterModal = getOneLetterModal(interaction);
 			const inputLetter = await oneLetterModal.showModalAndWaitForResult(interaction, {

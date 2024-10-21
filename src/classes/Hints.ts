@@ -9,6 +9,7 @@ import {
 } from "discord.js";
 import CustomButton from "./CustomButton";
 import { AnilistWaifu } from "./AnilistWaifu";
+import { UserModel } from "../database/models/user";
 
 export type MemberHintData = {
 	knownName: string;
@@ -78,7 +79,6 @@ export class HintCacheManager {
 	};
 
 	private getDefaultMemberData = (waifuName: string): MemberHintData => {
-		console.debug(waifuName);
 		return {
 			knownName: waifuName.replace(/\S/g, "*"),
 			usedHints: {},
@@ -94,6 +94,7 @@ export interface InteractionHintButtonComponentData extends Omit<BaseComponentDa
 	label: typeof CustomButton.prototype.label;
 	style: (buttonData: HintButton, memberHintData: MemberHintData) => typeof CustomButton.prototype.style;
 	customId: typeof CustomButton.prototype.customId;
+	cost:number;
 
 	/**
 	 * Process hint button click and return updated MemberHintData to main process to respond to the itneraction
@@ -109,8 +110,22 @@ type ReturnTypeMap<T> = {
 	[K in keyof T]: T[K] extends (...args: any[]) => infer R ? R : T[K];
 };
 
-type HintButtonToCustomButtonMap = ReturnTypeMap<Omit<HintButton, "build" | "execute">>;
-const BANNED_FUNCTIONS = ["build", "execute"];
+const BANNED_PROPERTIES = ["build", "execute"] as const;
+type BANNED_PROPERTIES_TYPE = typeof BANNED_PROPERTIES[number];
+type HintButtonToCustomButtonMap = ReturnTypeMap<Omit<HintButton, BANNED_PROPERTIES_TYPE>>;
+
+// Fonction de type garde
+function isBannedProperty(prop: string): prop is BANNED_PROPERTIES_TYPE {
+	return BANNED_PROPERTIES.includes(prop as BANNED_PROPERTIES_TYPE);
+}
+
+async function applyTokenCostToUser(userId : string, cost:number){
+	let userData = await UserModel.findOne({ id: userId })
+	if(!userData || userData.tokens < cost){
+		throw new Error(`Vous n'avez pas assez de tokens pour utiliser cet indice\nRequis : ${cost}\nPossédé : ${userData?.tokens ?? 0}`)
+	}
+	return await UserModel.findOneAndUpdate({ id: userId },{ $inc: { "tokens": -cost } });
+}
 
 export class HintButton implements InteractionHintButtonComponentData {
 	disabled: (buttonData: HintButton, memberHintData: MemberHintData) => typeof CustomButton.prototype.disabled;
@@ -121,13 +136,13 @@ export class HintButton implements InteractionHintButtonComponentData {
 	execute: (interaction: ButtonInteraction<CacheType>, memberHintData: MemberWaifuHintData, ...args: any[]) => Promise<any>;
 	type: typeof CustomButton.prototype.type;
 	regexValidator?: RegExp | undefined;
+	cost: number;
 
 	build = (memberHintData?: MemberWaifuHintData) => {
 		if (!memberHintData) throw Error("HintButton requires memberHintData to be built");
 		let toCustomButtonMap: Partial<HintButtonToCustomButtonMap> = {};
 
-		for (const key of Object.keys(this)) {
-			if (BANNED_FUNCTIONS.includes(key)) continue;
+		for (const key of Object.keys(this).filter(k => !isBannedProperty(k))) {
 			if (typeof this[key as keyof this] == "function") {
 				let func = this[key as keyof this] as (...args: any[]) => any;
 				toCustomButtonMap[key as keyof HintButtonToCustomButtonMap] = func(this, memberHintData);
@@ -138,14 +153,20 @@ export class HintButton implements InteractionHintButtonComponentData {
 		return new ButtonBuilder(toCustomButtonMap);
 	};
 
-	constructor(data: InteractionHintButtonComponentData) {
+	constructor(data: AtLeast<InteractionHintButtonComponentData, "style" | "customId" | "label" | "type" | "regexValidator">) {
+		this.cost = data.cost ?? 1
 		this.style = data.style;
 		this.customId = `showHint-${data.customId}`;
 		this.disabled = data.disabled ?? ((buttonData, memberHintData) => !!memberHintData.usedHints[buttonData.customId]);
 		this.emoji = data.emoji = () => undefined;
-		this.label = data.label;
+		this.label = `${data.label} (${this.cost}₮)`;
 		this.type = data.type;
 		this.regexValidator = data.regexValidator && data.regexValidator;
-		this.execute = data.execute ?? ((interaction: ButtonInteraction, ...args) => interaction.reply("You pressed the button"));
+		this.execute = async(interaction, memberHintData) => {
+			await applyTokenCostToUser(interaction.user.id, this.cost);
+			// console.debug(`${interaction.user.globalName} payed ${this.cost} tokens to use ${this.customId}`)
+			data.execute && await data.execute(interaction, memberHintData)
+			return memberHintData;
+		};
 	}
 }

@@ -2,12 +2,12 @@ import { ButtonStyle, ComponentType } from "discord.js";
 import { HintButton } from "../../../../classes/Hints";
 
 const BUTTON_ID = "revealVowels";
+const vowels = "aeiouyAEIOUY".split("");
 
 export default new HintButton({
 	type: ComponentType.Button,
 	customId: BUTTON_ID,
 	execute: async (_, memberHintData) => {
-		const vowels = "aeiouyAEIOUY".split("");
 		const splittedKnownName = memberHintData.knownName.split("");
 		memberHintData.trueName.split("").forEach((trueNameLetter, idx) => {
 			if (vowels.includes(trueNameLetter)) {
@@ -21,4 +21,5 @@ export default new HintButton({
 	disabled: (_, memberHintData) => !!memberHintData.usedHints[BUTTON_ID],
 	style: (_, memberHintData) => (memberHintData.usedHints[BUTTON_ID] ? ButtonStyle.Success : ButtonStyle.Primary),
 	label: "Reveal Vowels",
+	cost: 3
 });

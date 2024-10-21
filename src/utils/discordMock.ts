@@ -487,7 +487,6 @@ export async function getCommandOptions (
   commandInput: CommandNames
 ): Promise<Map<string, OptionAndValue>> {
   let { command, subCommandGroup, subCommand } = commandInput
-  console.debug(command, subCommandGroup, subCommand)
   if (!localCommands.has(command))
     throw new Error("Cette commande n'existe pas\nPensez à bien valider l'autocomplétion en appuyant sur Tab ou Entree")
   let localCommand:

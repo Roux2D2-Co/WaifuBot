@@ -33,7 +33,7 @@ export default new CustomButton({
 		if (!!selectedHint) {
 			let selectedButton = hintButtons[selectedHint];
 			if (!selectedButton) {
-				interaction.reply({ ephemeral: true, content: "Cant' find hint button" });
+				interaction.reply({ ephemeral: true, content: "Can't find hint button" });
 			} else {
 				try {
 					let {
